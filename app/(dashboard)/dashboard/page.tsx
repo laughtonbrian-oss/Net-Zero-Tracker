@@ -4,10 +4,8 @@ import { redirect } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   BarChart2,
-  Target,
-  Zap,
   GitBranch,
-  TrendingDown,
+  Target,
   Building2,
   ArrowRight,
   AlertTriangle,
@@ -133,10 +131,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* KPI Cards — client component with count-up animation */}
-      <KpiCards
-        items={kpis}
-        icons={[BarChart2, Target, Zap, TrendingDown]}
-      />
+      <KpiCards items={kpis} />
 
       {/* Alerts banner */}
       {(eolAlerts > 0 || overdueCount > 0) && (

@@ -3,7 +3,18 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowRight, type LucideIcon } from "lucide-react";
+import {
+  ArrowRight,
+  BarChart2,
+  Target,
+  Zap,
+  TrendingDown,
+  GitBranch,
+  Building2,
+  Map,
+  Bell,
+  type LucideIcon,
+} from "lucide-react";
 
 export type KpiItem = {
   label: string;
@@ -39,17 +50,23 @@ function useCountUp(target: number, duration = 1400) {
   return current;
 }
 
-const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {};
-
-// We receive icon components pre-rendered as strings and re-import lazily.
-// Instead, parent passes an iconComponent prop. See KpiCard below.
+const iconMap: Record<string, LucideIcon> = {
+  BarChart2,
+  Target,
+  Zap,
+  TrendingDown,
+  GitBranch,
+  Building2,
+  Map,
+  Bell,
+};
 
 type KpiCardProps = {
   item: KpiItem;
-  icon: LucideIcon;
 };
 
-function KpiCard({ item, icon: Icon }: KpiCardProps) {
+function KpiCard({ item }: KpiCardProps) {
+  const Icon = iconMap[item.iconName] ?? BarChart2;
   const count = useCountUp(item.numericValue ?? 0);
   const displayValue =
     item.numericValue !== null
@@ -81,14 +98,13 @@ function KpiCard({ item, icon: Icon }: KpiCardProps) {
 
 type Props = {
   items: KpiItem[];
-  icons: LucideIcon[];
 };
 
-export function KpiCards({ items, icons }: Props) {
+export function KpiCards({ items }: Props) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      {items.map((item, i) => (
-        <KpiCard key={item.label} item={item} icon={icons[i]} />
+      {items.map((item) => (
+        <KpiCard key={item.label} item={item} />
       ))}
     </div>
   );
