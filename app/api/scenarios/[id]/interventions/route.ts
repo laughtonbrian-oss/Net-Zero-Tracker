@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantContext } from "@/lib/tenant";
 import { requireEdit } from "@/lib/permissions";
+import { writeAuditLog } from "@/lib/audit";
 import { z } from "zod";
 
 const upsertSchema = z.object({
@@ -125,6 +126,16 @@ export async function PATCH(
       data: updates,
     });
 
+    await writeAuditLog({
+      companyId: ctx.companyId,
+      userId: ctx.userId,
+      entityType: "scenarioIntervention",
+      entityId: existing.id,
+      action: "updated",
+      before: existing,
+      after: updates,
+    });
+
     return NextResponse.json({ data: si });
   } catch (err) {
     if (err instanceof Response) return err;
@@ -151,9 +162,24 @@ export async function DELETE(
       return NextResponse.json({ error: "interventionId query param required" }, { status: 400 });
     }
 
+    const existing = await db.scenarioIntervention.findFirst({
+      where: { scenarioId, interventionId },
+    });
+
     await db.scenarioIntervention.deleteMany({
       where: { scenarioId, interventionId },
     });
+
+    if (existing) {
+      await writeAuditLog({
+        companyId: ctx.companyId,
+        userId: ctx.userId,
+        entityType: "scenarioIntervention",
+        entityId: existing.id,
+        action: "deleted",
+        before: existing,
+      });
+    }
 
     return NextResponse.json({ data: { removed: true } });
   } catch (err) {

@@ -5,6 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Sheet,
   SheetContent,
   SheetHeader,
@@ -13,9 +20,11 @@ import {
 } from "@/components/ui/sheet";
 import { toast } from "sonner";
 
-type FinancialFields = {
+export type FinancialFields = {
   startYear: number;
   endYear: number | null;
+  startQuarter: number | null;
+  endQuarter: number | null;
   executionPct: number;
   implementationPacePctPerYear: number | null;
   technicalAssetLife: number | null;
@@ -58,8 +67,6 @@ export function ScenarioInterventionEditor({
 }: Props) {
   const [form, setForm] = useState<FinancialFields>(current);
   const [loading, setLoading] = useState(false);
-
-  // Reset when opening
   const key = `${scenarioId}-${interventionId}-${open}`;
 
   async function handleSave() {
@@ -80,8 +87,12 @@ export function ScenarioInterventionEditor({
     toast.success("Scenario parameters updated");
   }
 
-  function field(label: string, key: keyof FinancialFields, opts?: { unit?: string; hint?: string }) {
-    const val = form[key];
+  function field(
+    label: string,
+    fkey: keyof FinancialFields,
+    opts?: { unit?: string; hint?: string }
+  ) {
+    const val = form[fkey];
     const strVal = typeof val === "number" ? String(val) : numVal(val as number | null);
     return (
       <div className="space-y-1">
@@ -94,14 +105,33 @@ export function ScenarioInterventionEditor({
           type="number"
           step="any"
           value={strVal}
-          onChange={(e) =>
-            setForm((f) => ({
-              ...f,
-              [key]: parseNum(e.target.value),
-            }))
-          }
+          onChange={(e) => setForm((f) => ({ ...f, [fkey]: parseNum(e.target.value) }))}
           placeholder="—"
         />
+      </div>
+    );
+  }
+
+  function quarterSelect(label: string, qkey: "startQuarter" | "endQuarter") {
+    const val = form[qkey];
+    return (
+      <div className="space-y-1">
+        <Label className="text-xs">{label}</Label>
+        <Select
+          value={val !== null && val !== undefined ? String(val) : ""}
+          onValueChange={(v) => setForm((f) => ({ ...f, [qkey]: v ? Number(v) : null }))}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="—" />
+          </SelectTrigger>
+          <SelectContent>
+            {[1, 2, 3, 4].map((q) => (
+              <SelectItem key={q} value={String(q)}>
+                Q{q}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
     );
   }
@@ -138,12 +168,18 @@ export function ScenarioInterventionEditor({
           </div>
 
           <div className="grid grid-cols-2 gap-3">
+            {quarterSelect("Start quarter", "startQuarter")}
+            {quarterSelect("End quarter", "endQuarter")}
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
             {field("Execution", "executionPct", { unit: "%" })}
             {field("Implementation pace", "implementationPacePctPerYear", {
               unit: "%/yr",
               hint: "How fast the intervention ramps up",
             })}
           </div>
+
           <div className="grid grid-cols-2 gap-3">
             {field("Technical asset life", "technicalAssetLife", {
               unit: "yrs",
@@ -185,7 +221,9 @@ export function ScenarioInterventionEditor({
         </div>
 
         <SheetFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
           <Button onClick={handleSave} disabled={loading}>
             {loading ? "Saving…" : "Save"}
           </Button>
