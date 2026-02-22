@@ -437,7 +437,7 @@ async function main() {
       category: "Energy Efficiency", scopesAffected: "[1,2]",
       totalReductionTco2e: 28100,
       implementationStartYear: 2025, fullBenefitYear: 2026,
-      status: "PLANNED", owner: "James Whitmore",
+      status: "IN_PROGRESS", owner: "James Whitmore",
     },
   });
   await db.interventionAnnualReduction.createMany({
@@ -469,7 +469,7 @@ async function main() {
       category: "Renewable Energy", scopesAffected: "[2]",
       totalReductionTco2e: 86700,
       implementationStartYear: 2025, fullBenefitYear: 2026,
-      status: "PLANNED", owner: "Sarah Chen",
+      status: "IN_PROGRESS", owner: "Sarah Chen",
     },
   });
   await db.interventionAnnualReduction.createMany({
@@ -533,7 +533,7 @@ async function main() {
       category: "Process Decarbonisation", scopesAffected: "[1]",
       totalReductionTco2e: 37500,
       implementationStartYear: 2025, fullBenefitYear: 2027,
-      status: "PLANNED", owner: "James Whitmore",
+      status: "IN_PROGRESS", owner: "James Whitmore",
     },
   });
   await db.interventionAnnualReduction.createMany({
@@ -549,14 +549,14 @@ async function main() {
       category: "Energy Efficiency", scopesAffected: "[1,2]",
       totalReductionTco2e: 45000,
       implementationStartYear: 2025, fullBenefitYear: 2027,
-      status: "PLANNED", owner: "James Whitmore",
+      status: "IN_PROGRESS", owner: "James Whitmore",
     },
   });
   await db.interventionAnnualReduction.createMany({
     data: ramp(2025, 2027, 1800).map((r) => ({ interventionId: warsawThermal.id, ...r })),
   });
 
-  console.log(`✅  Interventions (15) + annual reductions through 2050`);
+  console.log(`✅  Interventions (15): 2 completed, 5 in progress, 8 planned`);
 
   // ──────────────────────────────────────────────────────────────────────────
   // SCENARIOS — 3 (Ambitious 2040 / Moderate 2045 / Conservative 2050)
