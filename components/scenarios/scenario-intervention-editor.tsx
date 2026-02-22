@@ -18,6 +18,7 @@ type FinancialFields = {
   endYear: number | null;
   executionPct: number;
   implementationPacePctPerYear: number | null;
+  technicalAssetLife: number | null;
   capex: number | null;
   opex: number | null;
   financialLifetime: number | null;
@@ -141,6 +142,12 @@ export function ScenarioInterventionEditor({
             {field("Implementation pace", "implementationPacePctPerYear", {
               unit: "%/yr",
               hint: "How fast the intervention ramps up",
+            })}
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {field("Technical asset life", "technicalAssetLife", {
+              unit: "yrs",
+              hint: "Used to flag replacement need before 2050",
             })}
           </div>
 

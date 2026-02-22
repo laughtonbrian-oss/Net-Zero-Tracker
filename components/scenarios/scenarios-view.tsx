@@ -541,6 +541,7 @@ export function ScenariosView({ initialScenarios, interventions, baseline, targe
             endYear: editingIv.endYear,
             executionPct: editingIv.executionPct,
             implementationPacePctPerYear: editingIv.implementationPacePctPerYear,
+            technicalAssetLife: editingIv.technicalAssetLife,
             capex: editingIv.capex,
             opex: editingIv.opex,
             financialLifetime: editingIv.financialLifetime,

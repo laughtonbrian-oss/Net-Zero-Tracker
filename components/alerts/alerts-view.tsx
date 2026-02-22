@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { AlertTriangle, Clock, CheckCircle2, Wrench } from "lucide-react";
+import { AlertTriangle, Clock, CheckCircle2, Wrench, RefreshCw } from "lucide-react";
 
 type EolAlert = {
   id: string;
@@ -46,10 +46,20 @@ type StalledIntervention = {
   site: { id: string; name: string } | null;
 };
 
+type ReplacementAlert = {
+  interventionId: string;
+  interventionName: string;
+  scenarioName: string;
+  startYear: number;
+  technicalAssetLife: number;
+  replacementYear: number;
+};
+
 type Props = {
   eolAlerts: EolAlert[];
   overdueInterventions: OverdueIntervention[];
   stalledInterventions: StalledIntervention[];
+  replacementAlerts: ReplacementAlert[];
 };
 
 const currentYear = new Date().getFullYear();
@@ -89,8 +99,8 @@ function conditionBadge(rating: string) {
   );
 }
 
-export function AlertsView({ eolAlerts, overdueInterventions, stalledInterventions }: Props) {
-  const totalAlerts = eolAlerts.length + overdueInterventions.length + stalledInterventions.length;
+export function AlertsView({ eolAlerts, overdueInterventions, stalledInterventions, replacementAlerts }: Props) {
+  const totalAlerts = eolAlerts.length + overdueInterventions.length + stalledInterventions.length + replacementAlerts.length;
 
   if (totalAlerts === 0) {
     return (
@@ -265,6 +275,55 @@ export function AlertsView({ eolAlerts, overdueInterventions, stalledInterventio
                       </span>
                     </TableCell>
                     <TableCell className="text-sm text-gray-600">{i.owner ?? "—"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Replacement Alerts */}
+      <Card className="border-amber-200 bg-amber-50/30 shadow-none">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <RefreshCw className="h-4 w-4 text-amber-500" />
+            Assets Requiring Replacement Before 2050
+            {replacementAlerts.length > 0 && (
+              <Badge className="ml-auto text-xs bg-amber-100 text-amber-700 border-amber-200 border">
+                {replacementAlerts.length}
+              </Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          {replacementAlerts.length === 0 ? (
+            <p className="text-sm text-gray-500 px-6 pb-6">
+              No interventions require replacement before 2050.
+            </p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead>Intervention</TableHead>
+                  <TableHead>Scenario</TableHead>
+                  <TableHead>Start Year</TableHead>
+                  <TableHead>Asset Life</TableHead>
+                  <TableHead>Replacement Year</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {replacementAlerts.map((a) => (
+                  <TableRow key={a.interventionId}>
+                    <TableCell className="font-medium text-sm">{a.interventionName}</TableCell>
+                    <TableCell className="text-sm text-gray-600">{a.scenarioName}</TableCell>
+                    <TableCell className="text-sm">{a.startYear}</TableCell>
+                    <TableCell className="text-sm text-gray-600">{a.technicalAssetLife} yrs</TableCell>
+                    <TableCell>
+                      <span className="text-sm font-medium text-amber-700">
+                        {a.replacementYear}
+                      </span>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

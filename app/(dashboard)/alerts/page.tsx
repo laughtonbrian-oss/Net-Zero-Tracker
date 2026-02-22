@@ -13,7 +13,7 @@ export default async function AlertsPage() {
 
   const companyId = session.user.companyId;
 
-  const [assets, interventions] = await Promise.all([
+  const [assets, interventions, scenarioInterventions] = await Promise.all([
     db.asset.findMany({
       where: { companyId },
       include: { site: { select: { id: true, name: true } } },
@@ -23,6 +23,17 @@ export default async function AlertsPage() {
       where: { companyId },
       include: { site: { select: { id: true, name: true } } },
       orderBy: { implementationStartYear: "asc" },
+    }),
+    db.scenarioIntervention.findMany({
+      where: {
+        scenario: { companyId },
+        technicalAssetLife: { not: null },
+      },
+      include: {
+        intervention: { select: { id: true, name: true } },
+        scenario: { select: { id: true, name: true } },
+      },
+      orderBy: { startYear: "asc" },
     }),
   ]);
 
@@ -46,6 +57,38 @@ export default async function AlertsPage() {
     (i) => i.status === "IN_PROGRESS" && i.fullBenefitYear < currentYear
   );
 
+  // Replacement alerts: scenario interventions whose asset will need replacing before 2050
+  // Deduplicate by intervention id — show the earliest replacement year across scenarios
+  const replacementMap = new Map<string, {
+    interventionId: string;
+    interventionName: string;
+    scenarioName: string;
+    startYear: number;
+    technicalAssetLife: number;
+    replacementYear: number;
+  }>();
+
+  for (const si of scenarioInterventions) {
+    if (si.technicalAssetLife === null) continue;
+    const replacementYear = si.startYear + si.technicalAssetLife;
+    if (replacementYear >= 2050) continue;
+    const existing = replacementMap.get(si.intervention.id);
+    if (!existing || replacementYear < existing.replacementYear) {
+      replacementMap.set(si.intervention.id, {
+        interventionId: si.intervention.id,
+        interventionName: si.intervention.name,
+        scenarioName: si.scenario.name,
+        startYear: si.startYear,
+        technicalAssetLife: si.technicalAssetLife,
+        replacementYear,
+      });
+    }
+  }
+
+  const replacementAlerts = Array.from(replacementMap.values()).sort(
+    (a, b) => a.replacementYear - b.replacementYear
+  );
+
   return (
     <div className="space-y-6">
       <div>
@@ -58,6 +101,7 @@ export default async function AlertsPage() {
         eolAlerts={eolAlerts}
         overdueInterventions={overdueInterventions}
         stalledInterventions={stalledInterventions}
+        replacementAlerts={replacementAlerts}
       />
     </div>
   );
