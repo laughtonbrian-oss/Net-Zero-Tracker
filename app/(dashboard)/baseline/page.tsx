@@ -11,7 +11,10 @@ export default async function BaselinePage() {
 
   const baseline = await db.baseline.findFirst({
     where: { companyId: session.user.companyId },
-    include: { entries: { orderBy: [{ scope: "asc" }, { category: "asc" }] } },
+    include: {
+      entries: { orderBy: [{ scope: "asc" }, { category: "asc" }] },
+      growthRates: { orderBy: { fromYear: "asc" } },
+    },
   });
 
   return (

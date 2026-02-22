@@ -13,12 +13,11 @@ import {
   ResponsiveContainer,
   ReferenceLine,
 } from "recharts";
-import type { GlidepathDataPoint, GlidepathMeta } from "@/lib/types";
+import type { GlidepathDataPoint } from "@/lib/types";
 
 type Props = {
   data: GlidepathDataPoint[];
   baselineYear: number;
-  meta?: GlidepathMeta;
   targets?: { label: string; isSbtiAligned: boolean; targetYear: number; reductionPct: number }[];
 };
 
@@ -28,7 +27,11 @@ function formatTco2e(value: number) {
   return value.toFixed(0);
 }
 
-function CustomTooltip({ active, payload, label }: {
+function CustomTooltip({
+  active,
+  payload,
+  label,
+}: {
   active?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload?: any[];
@@ -42,8 +45,11 @@ function CustomTooltip({ active, payload, label }: {
         .filter((p) => p.value != null && p.value !== 0)
         .map((p) => (
           <div key={p.name} className="flex items-center gap-2 py-0.5">
-            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: p.color || p.fill }} />
-            <span className="text-gray-600 truncate max-w-[120px]">{p.name}:</span>
+            <span
+              className="w-2 h-2 rounded-full shrink-0"
+              style={{ backgroundColor: p.color || p.fill }}
+            />
+            <span className="text-gray-600 truncate max-w-[140px]">{p.name}:</span>
             <span className="font-medium text-gray-900 ml-auto">
               {formatTco2e(p.value)} tCO₂e
             </span>
@@ -53,7 +59,10 @@ function CustomTooltip({ active, payload, label }: {
   );
 }
 
-function CustomLegend({ payload, targets }: {
+function CustomLegend({
+  payload,
+  targets,
+}: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload?: any[];
   targets?: Props["targets"];
@@ -64,7 +73,20 @@ function CustomLegend({ payload, targets }: {
     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-3 text-xs text-gray-500">
       {payload.map((entry) => (
         <div key={entry.value} className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: entry.color || entry.fill }} />
+          {entry.type === "circle" ? (
+            <span
+              className="w-2.5 h-2.5 rounded-full shrink-0"
+              style={{ backgroundColor: entry.color }}
+            />
+          ) : (
+            <span
+              className="w-4 shrink-0 inline-block"
+              style={{
+                height: "2px",
+                backgroundColor: entry.color,
+              }}
+            />
+          )}
           <span>{entry.value}</span>
           {entry.value === "Target" && sbti && (
             <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-700 border border-emerald-200">
@@ -77,14 +99,13 @@ function CustomLegend({ payload, targets }: {
   );
 }
 
-export function GlidepathChart({ data, baselineYear, meta, targets }: Props) {
+export function GlidepathChart({ data, baselineYear, targets }: Props) {
   if (!data.length) return null;
-  const interventions = meta?.interventions ?? [];
 
   return (
-    <ResponsiveContainer width="100%" height={360}>
-      <ComposedChart data={data} margin={{ top: 10, right: 20, left: 10, bottom: 10 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#f0fdf4" />
+    <ResponsiveContainer width="100%" height={340}>
+      <ComposedChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
         <XAxis
           dataKey="year"
           tick={{ fontSize: 11, fill: "#6b7280" }}
@@ -96,50 +117,52 @@ export function GlidepathChart({ data, baselineYear, meta, targets }: Props) {
           tick={{ fontSize: 11, fill: "#6b7280" }}
           tickLine={false}
           axisLine={false}
-          width={60}
+          width={56}
         />
         <Tooltip content={<CustomTooltip />} />
         <Legend
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          content={(props: any) => <CustomLegend payload={props.payload} targets={targets} />}
+          content={(props: any) => (
+            <CustomLegend payload={props.payload} targets={targets} />
+          )}
         />
         <ReferenceLine
           x={baselineYear}
           stroke="#d1d5db"
           strokeDasharray="4 4"
-          label={{ value: "Baseline", position: "top", fontSize: 10, fill: "#9ca3af" }}
+          label={{ value: "Baseline", position: "insideTopRight", fontSize: 10, fill: "#9ca3af" }}
         />
 
-        {/* Stacked bars: residual at bottom, then each intervention */}
-        <Bar dataKey="residual" name="Residual" stackId="a" fill="#e5e7eb" maxBarSize={20} />
-        {interventions.map((iv) => (
-          <Bar
-            key={iv.id}
-            dataKey={`i_${iv.id}`}
-            name={iv.name}
-            stackId="a"
-            fill={iv.color}
-            maxBarSize={20}
-          />
-        ))}
+        {/* Residual emissions — single bar */}
+        <Bar
+          dataKey="residual"
+          name="Residual emissions"
+          fill="#d1fae5"
+          stroke="#a7f3d0"
+          strokeWidth={0.5}
+          maxBarSize={18}
+          radius={[2, 2, 0, 0]}
+        />
 
-        {/* Lines */}
+        {/* BAU trajectory line — sits above bars */}
         <Line
           type="monotone"
           dataKey="bau"
           name="BAU trajectory"
           stroke="#9ca3af"
-          strokeWidth={1.5}
-          strokeDasharray="5 4"
+          strokeWidth={2}
+          strokeDasharray="6 4"
           dot={false}
           activeDot={{ r: 3 }}
         />
+
+        {/* Target line */}
         <Line
           type="monotone"
           dataKey="target"
           name="Target"
           stroke="#ef4444"
-          strokeWidth={1.5}
+          strokeWidth={2}
           strokeDasharray="6 3"
           dot={false}
           activeDot={{ r: 3 }}
@@ -147,12 +170,7 @@ export function GlidepathChart({ data, baselineYear, meta, targets }: Props) {
         />
 
         {/* Actual emissions scatter */}
-        <Scatter
-          dataKey="actual"
-          name="Actual emissions"
-          fill="#374151"
-          legendType="circle"
-        />
+        <Scatter dataKey="actual" name="Actual emissions" fill="#374151" legendType="circle" />
       </ComposedChart>
     </ResponsiveContainer>
   );

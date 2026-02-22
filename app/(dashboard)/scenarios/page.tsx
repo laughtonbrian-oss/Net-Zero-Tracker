@@ -34,7 +34,7 @@ export default async function ScenariosPage() {
     }),
     db.baseline.findFirst({
       where: { companyId },
-      include: { entries: true },
+      include: { entries: true, growthRates: { orderBy: { fromYear: "asc" } } },
     }),
     db.target.findMany({
       where: { companyId },

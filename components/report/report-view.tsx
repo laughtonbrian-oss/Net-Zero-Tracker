@@ -14,7 +14,7 @@ import { Printer, Download } from "lucide-react";
 import { GlidepathChart } from "@/components/charts/glidepath-chart";
 import { BaselineBreakdownChart } from "@/components/charts/baseline-breakdown-chart";
 import { MACCChart } from "@/components/charts/macc-chart";
-import { buildGlidepathData, buildGlidepathMeta } from "@/lib/calculations/emissions";
+import { buildGlidepathData } from "@/lib/calculations/emissions";
 import { buildMACCData } from "@/lib/calculations/macc";
 import type { Target, Baseline, BaselineEntry, Scenario, ScenarioIntervention, Intervention, InterventionAnnualReduction } from "@prisma/client";
 
@@ -81,25 +81,6 @@ export function ReportView({ company, baseline, targets, scenarios, intervention
           actualEmissions: [],
         })
       : [];
-
-  const meta = activeScenario
-    ? buildGlidepathMeta(
-        activeScenario.interventions.map((si) => ({
-          interventionId: si.interventionId,
-          startYear: si.startYear,
-          endYear: si.endYear,
-          executionPct: si.executionPct,
-          implementationPacePctPerYear: si.implementationPacePctPerYear,
-          intervention: {
-            totalReductionTco2e: si.intervention.totalReductionTco2e,
-            implementationStartYear: si.intervention.implementationStartYear,
-            fullBenefitYear: si.intervention.fullBenefitYear,
-            annualReductions: si.intervention.annualReductions,
-          },
-        })),
-        interventions
-      )
-    : undefined;
 
   const maccData = activeScenario
     ? buildMACCData(
@@ -250,7 +231,6 @@ export function ReportView({ company, baseline, targets, scenarios, intervention
                 <GlidepathChart
                   data={glidepathData}
                   baselineYear={baselineYear}
-                  meta={meta}
                   targets={targets.map((t) => ({
                     label: t.label,
                     isSbtiAligned: t.isSbtiAligned,

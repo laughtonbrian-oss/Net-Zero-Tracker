@@ -11,10 +11,17 @@ const entrySchema = z.object({
   emissionsTco2e: z.number().nonnegative(),
 });
 
+const growthRateSchema = z.object({
+  fromYear: z.number().int().min(1900).max(2100),
+  toYear: z.number().int().min(1900).max(2100),
+  ratePct: z.number().min(-100).max(100),
+});
+
 const baselineSchema = z.object({
   year: z.number().int().min(1900).max(2100),
   growthRatePct: z.number().min(-100).max(100).default(0),
   entries: z.array(entrySchema).min(1),
+  growthRates: z.array(growthRateSchema).optional().default([]),
 });
 
 export async function GET() {
@@ -22,7 +29,10 @@ export async function GET() {
     const ctx = await getTenantContext();
     const baseline = await db.baseline.findFirst({
       where: { companyId: ctx.companyId },
-      include: { entries: { orderBy: [{ scope: "asc" }, { category: "asc" }] } },
+      include: {
+        entries: { orderBy: [{ scope: "asc" }, { category: "asc" }] },
+        growthRates: { orderBy: { fromYear: "asc" } },
+      },
       orderBy: { createdAt: "desc" },
     });
     return NextResponse.json({ data: baseline });
@@ -43,9 +53,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
 
-    const { year, growthRatePct, entries } = parsed.data;
+    const { year, growthRatePct, entries, growthRates } = parsed.data;
 
-    // Replace existing baseline (upsert)
     const existing = await db.baseline.findFirst({
       where: { companyId: ctx.companyId },
     });
@@ -53,14 +62,19 @@ export async function POST(req: Request) {
     const baseline = await db.$transaction(async (tx) => {
       if (existing) {
         await tx.baselineEntry.deleteMany({ where: { baselineId: existing.id } });
+        await tx.growthRate.deleteMany({ where: { baselineId: existing.id } });
+        if (growthRates.length > 0) {
+          await tx.growthRate.createMany({
+            data: growthRates.map((gr) => ({ baselineId: existing.id, ...gr })),
+          });
+        }
         return tx.baseline.update({
           where: { id: existing.id },
-          data: {
-            year,
-            growthRatePct,
-            entries: { create: entries },
+          data: { year, growthRatePct, entries: { create: entries } },
+          include: {
+            entries: true,
+            growthRates: { orderBy: { fromYear: "asc" } },
           },
-          include: { entries: true },
         });
       }
       return tx.baseline.create({
@@ -69,8 +83,12 @@ export async function POST(req: Request) {
           year,
           growthRatePct,
           entries: { create: entries },
+          growthRates: { create: growthRates },
         },
-        include: { entries: true },
+        include: {
+          entries: true,
+          growthRates: { orderBy: { fromYear: "asc" } },
+        },
       });
     });
 
@@ -80,7 +98,7 @@ export async function POST(req: Request) {
       entityType: "baseline",
       entityId: baseline.id,
       action: existing ? "updated" : "created",
-      after: { year, growthRatePct, entryCount: entries.length },
+      after: { year, growthRatePct, entryCount: entries.length, growthRateCount: growthRates.length },
     });
 
     return NextResponse.json({ data: baseline }, { status: existing ? 200 : 201 });

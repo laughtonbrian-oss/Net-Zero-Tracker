@@ -26,7 +26,7 @@ import { GlidepathChart } from "@/components/charts/glidepath-chart";
 import { WedgeChart } from "@/components/charts/wedge-chart";
 import { MACCChart } from "@/components/charts/macc-chart";
 import { ScenarioInterventionEditor } from "./scenario-intervention-editor";
-import { buildGlidepathData, buildGlidepathMeta } from "@/lib/calculations/emissions";
+import { buildGlidepathData } from "@/lib/calculations/emissions";
 import { buildWedgeData } from "@/lib/calculations/wedge";
 import { buildMACCData } from "@/lib/calculations/macc";
 import type { Scenario, Intervention, Baseline, Target, BaselineEntry } from "@prisma/client";
@@ -424,22 +424,6 @@ export function ScenariosView({ initialScenarios, interventions, baseline, targe
                       <GlidepathChart
                         data={glidepathData}
                         baselineYear={baselineYear}
-                        meta={buildGlidepathMeta(
-                          activeScenario ? activeScenario.interventions.map((si) => ({
-                            interventionId: si.interventionId,
-                            startYear: si.startYear,
-                            endYear: si.endYear,
-                            executionPct: si.executionPct,
-                            implementationPacePctPerYear: si.implementationPacePctPerYear,
-                            intervention: {
-                              totalReductionTco2e: si.intervention.totalReductionTco2e,
-                              implementationStartYear: si.intervention.implementationStartYear,
-                              fullBenefitYear: si.intervention.fullBenefitYear,
-                              annualReductions: si.intervention.annualReductions,
-                            },
-                          })) : [],
-                          interventions.map((i) => ({ id: i.id, name: i.name }))
-                        )}
                         targets={targets.map((t) => ({
                           label: t.label,
                           isSbtiAligned: t.isSbtiAligned,
