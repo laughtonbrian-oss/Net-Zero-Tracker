@@ -1,0 +1,381 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Plan {
+  FREE
+  PAID
+}
+
+enum Role {
+  ADMIN
+  EDITOR
+  VIEWER
+}
+
+enum InterventionStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
+
+enum ConditionRating {
+  RED
+  AMBER
+  GREEN
+}
+
+enum ReplacementPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+// ─── Multi-tenancy ────────────────────────────────────────────────────────────
+
+model Company {
+  id              String   @id @default(cuid())
+  name            String
+  slug            String   @unique
+  plan            Plan     @default(FREE)
+  logo            String?
+  createdAt       DateTime @default(now())
+
+  users           User[]
+  baselines       Baseline[]
+  targets         Target[]
+  interventions   Intervention[]
+  scenarios       Scenario[]
+  sites           Site[]
+  businessUnits   BusinessUnit[]
+  auditLogs       AuditLog[]
+  assets          Asset[]
+  actualEmissions ActualEmission[]
+  emissionFactors CompanyEmissionFactor[]
+  energyReadings  EnergyReading[]
+}
+
+// ─── Auth (NextAuth v5 / Auth.js) ────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  companyId     String?
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?   // hashed; null for OAuth users
+  role          Role      @default(VIEWER)
+  language      String    @default("en")
+  createdAt     DateTime  @default(now())
+
+  company       Company?  @relation(fields: [companyId], references: [id])
+  accounts      Account[]
+  sessions      Session[]
+  auditLogs     AuditLog[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── Audit ────────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  companyId  String
+  userId     String
+  entityType String
+  entityId   String
+  action     String
+  changes    String   // JSON string: { before: {...}, after: {...} }
+  timestamp  DateTime @default(now())
+
+  company    Company  @relation(fields: [companyId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
+}
+
+// ─── Baseline ─────────────────────────────────────────────────────────────────
+
+model Baseline {
+  id            String         @id @default(cuid())
+  companyId     String
+  year          Int
+  growthRatePct Float          @default(0)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  company       Company        @relation(fields: [companyId], references: [id])
+  entries       BaselineEntry[]
+  growthRates   GrowthRate[]
+}
+
+model BaselineEntry {
+  id             String   @id @default(cuid())
+  baselineId     String
+  scope          Int      // 1 | 2 | 3
+  category       String
+  emissionsTco2e Float
+
+  baseline       Baseline @relation(fields: [baselineId], references: [id], onDelete: Cascade)
+}
+
+// ─── Targets ──────────────────────────────────────────────────────────────────
+
+model Target {
+  id               String   @id @default(cuid())
+  companyId        String
+  label            String
+  scopeCombination String   // "1" | "2" | "3" | "1+2" | "1+2+3"
+  targetYear       Int
+  reductionPct     Float
+  isInterim        Boolean  @default(false)
+  isSbtiAligned    Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  company          Company  @relation(fields: [companyId], references: [id])
+}
+
+// ─── Grouping ─────────────────────────────────────────────────────────────────
+
+model Site {
+  id             String         @id @default(cuid())
+  companyId      String
+  name           String
+  address        String?
+  region         String?
+  country        String?
+  latitude       Float?
+  longitude      Float?
+
+  company        Company        @relation(fields: [companyId], references: [id])
+  interventions  Intervention[]
+  assets         Asset[]
+  energyReadings EnergyReading[]
+}
+
+model BusinessUnit {
+  id            String         @id @default(cuid())
+  companyId     String
+  name          String
+
+  company       Company        @relation(fields: [companyId], references: [id])
+  interventions Intervention[]
+}
+
+// ─── Intervention Library ─────────────────────────────────────────────────────
+
+model Intervention {
+  id                      String             @id @default(cuid())
+  companyId               String
+  siteId                  String?
+  businessUnitId          String?
+  name                    String
+  description             String?
+  category                String
+  scopesAffected          String             // JSON array e.g. "[1,2]"
+  totalReductionTco2e     Float
+  implementationStartYear Int
+  fullBenefitYear         Int
+  status                  InterventionStatus @default(PLANNED)
+  owner                   String?
+  createdAt               DateTime           @default(now())
+  updatedAt               DateTime           @updatedAt
+
+  company                 Company            @relation(fields: [companyId], references: [id])
+  site                    Site?              @relation(fields: [siteId], references: [id])
+  businessUnit            BusinessUnit?      @relation(fields: [businessUnitId], references: [id])
+  annualReductions        InterventionAnnualReduction[]
+  documents               InterventionDocument[]
+  scenarioInterventions   ScenarioIntervention[]
+  linkedAssets            Asset[]
+}
+
+model InterventionAnnualReduction {
+  id             String       @id @default(cuid())
+  interventionId String
+  year           Int
+  tco2eReduction Float
+
+  intervention   Intervention @relation(fields: [interventionId], references: [id], onDelete: Cascade)
+
+  @@unique([interventionId, year])
+}
+
+model InterventionDocument {
+  id             String       @id @default(cuid())
+  interventionId String
+  name           String
+  url            String
+  createdAt      DateTime     @default(now())
+
+  intervention   Intervention @relation(fields: [interventionId], references: [id], onDelete: Cascade)
+}
+
+// ─── Scenarios ────────────────────────────────────────────────────────────────
+
+model Scenario {
+  id            String   @id @default(cuid())
+  companyId     String
+  name          String
+  description   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  company       Company  @relation(fields: [companyId], references: [id])
+  interventions ScenarioIntervention[]
+}
+
+model ScenarioIntervention {
+  id                           String  @id @default(cuid())
+  scenarioId                   String
+  interventionId               String
+  startYear                    Int
+  endYear                      Int?
+  startQuarter                 Int?    // 1–4
+  endQuarter                   Int?    // 1–4
+  implementationPacePctPerYear Float?
+  executionPct                 Float   @default(100)
+  technicalAssetLife           Int?
+  financialLifetime            Int?
+  capex                        Float?
+  opex                         Float?
+  externalFunding              Float?
+  personnelTimeDays            Float?
+  personnelRatePerDay          Float?
+  notes                        String?
+
+  scenario                     Scenario     @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+  intervention                 Intervention @relation(fields: [interventionId], references: [id])
+
+  @@unique([scenarioId, interventionId])
+}
+
+// ─── Asset Register ───────────────────────────────────────────────────────────
+
+model Asset {
+  id                    String              @id @default(cuid())
+  companyId             String
+  siteId                String
+  name                  String
+  assetType             String
+  category              String              // freeform: HVAC / electrical / envelope / fleet / IT / energy / other
+  conditionRating       ConditionRating     @default(AMBER)
+  conditionNotes        String?
+  installationYear      Int
+  expectedUsefulLife    Int                 // years
+  // endOfLifeYear = installationYear + expectedUsefulLife (computed in application layer)
+  currentEnergyKwh      Float?
+  scope                 Int                 // 1 | 2 | 3
+  linkedInterventionId  String?
+  alertThresholdYears   Int                 @default(3)
+  replacementPriority   ReplacementPriority @default(MEDIUM)
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+
+  company               Company             @relation(fields: [companyId], references: [id])
+  site                  Site                @relation(fields: [siteId], references: [id])
+  linkedIntervention    Intervention?       @relation(fields: [linkedInterventionId], references: [id])
+}
+
+// ─── Actual Emissions ──────────────────────────────────────────────────────────
+
+model ActualEmission {
+  id        String   @id @default(cuid())
+  companyId String
+  year      Int
+  scope1    Float    @default(0)
+  scope2    Float    @default(0)
+  scope3    Float    @default(0)
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company   Company  @relation(fields: [companyId], references: [id])
+
+  @@unique([companyId, year])
+}
+
+model GrowthRate {
+  id         String   @id @default(cuid())
+  baselineId String
+  fromYear   Int
+  toYear     Int
+  ratePct    Float
+
+  baseline   Baseline @relation(fields: [baselineId], references: [id], onDelete: Cascade)
+}
+
+model CompanyEmissionFactor {
+  id        String   @id @default(cuid())
+  companyId String
+  region    String
+  fuelType  String
+  value     Float
+  source    String
+  year      Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company   Company  @relation(fields: [companyId], references: [id])
+
+  @@unique([companyId, region, fuelType])
+}
+
+model EnergyReading {
+  id         String   @id @default(cuid())
+  companyId  String
+  siteId     String
+  year       Int
+  month      Int
+  energyType String
+  kWh        Float
+  cost       Float?
+  createdAt  DateTime @default(now())
+
+  company    Company  @relation(fields: [companyId], references: [id])
+  site       Site     @relation(fields: [siteId], references: [id])
+
+  @@unique([companyId, siteId, year, month, energyType])
+}
