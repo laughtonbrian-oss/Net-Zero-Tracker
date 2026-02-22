@@ -37,20 +37,6 @@ type Props = {
   interventions: { id: string; name: string }[];
 };
 
-/** Strip @supports rules that reference lab/oklch/oklab from cloned stylesheets */
-function stripLabRules(rules: CSSRuleList) {
-  for (let i = rules.length - 1; i >= 0; i--) {
-    const rule = rules[i];
-    if (rule instanceof CSSSupportsRule && /lab|oklch|oklab/.test(rule.conditionText)) {
-      rule.parentStyleSheet?.deleteRule(i);
-      continue;
-    }
-    if ("cssRules" in rule && (rule as CSSGroupingRule).cssRules?.length) {
-      stripLabRules((rule as CSSGroupingRule).cssRules);
-    }
-  }
-}
-
 export function ReportView({ company, baseline, targets, scenarios, interventions }: Props) {
   const [selectedScenarioId, setSelectedScenarioId] = useState<string>(scenarios[0]?.id ?? "");
   const reportRef = useRef<HTMLDivElement>(null);
@@ -135,50 +121,11 @@ export function ReportView({ company, baseline, targets, scenarios, intervention
 
   async function handleExportPdf() {
     if (!reportRef.current) return;
-    const { default: html2canvas } = await import("html2canvas");
+    const { default: html2canvas } = await import("html2canvas-pro");
     const { default: jsPDF } = await import("jspdf");
     const canvas = await html2canvas(reportRef.current, {
       backgroundColor: "#ffffff",
       scale: 2,
-      onclone: (doc) => {
-        // Tailwind v4 generates @supports (color: lab(…)) and color-mix(in oklab)
-        // blocks that html2canvas cannot parse. Strip them from the clone.
-        for (const sheet of Array.from(doc.styleSheets)) {
-          try {
-            stripLabRules(sheet.cssRules);
-          } catch { /* cross-origin sheets throw SecurityError */ }
-        }
-        // Belt-and-braces: inject hex overrides for custom properties
-        const style = doc.createElement("style");
-        style.textContent = `
-          :root {
-            --background: #ffffff !important;
-            --foreground: #18181b !important;
-            --card: #ffffff !important;
-            --card-foreground: #18181b !important;
-            --popover: #ffffff !important;
-            --popover-foreground: #18181b !important;
-            --primary: #10b981 !important;
-            --primary-foreground: #fafafa !important;
-            --secondary: #f4f4f5 !important;
-            --secondary-foreground: #27272a !important;
-            --muted: #f4f4f5 !important;
-            --muted-foreground: #71717a !important;
-            --accent: #ecfdf5 !important;
-            --accent-foreground: #065f46 !important;
-            --destructive: #dc2626 !important;
-            --border: #e4e4e7 !important;
-            --input: #e4e4e7 !important;
-            --ring: #10b981 !important;
-            --chart-1: #10b981 !important;
-            --chart-2: #34d399 !important;
-            --chart-3: #059669 !important;
-            --chart-4: #fbbf24 !important;
-            --chart-5: #71717a !important;
-          }
-        `;
-        doc.head.appendChild(style);
-      },
     });
     const imgData = canvas.toDataURL("image/png");
     const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
