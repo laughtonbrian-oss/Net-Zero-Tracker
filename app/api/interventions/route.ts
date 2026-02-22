@@ -10,7 +10,7 @@ const interventionSchema = z.object({
   description: z.string().optional(),
   category: z.string().min(1).max(100),
   scopesAffected: z.array(z.number().int().min(1).max(3)).min(1),
-  totalReductionTco2e: z.number().positive(),
+  totalReductionTco2e: z.number().positive().max(10_000_000), // sanity cap: 10M tCO2e
   implementationStartYear: z.number().int().min(1900).max(2100),
   fullBenefitYear: z.number().int().min(1900).max(2100),
   status: z.enum(["PLANNED", "IN_PROGRESS", "COMPLETED", "ABANDONED"]).default("PLANNED"),

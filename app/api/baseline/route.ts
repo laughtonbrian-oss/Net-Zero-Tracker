@@ -61,8 +61,13 @@ export async function POST(req: Request) {
 
     const baseline = await db.$transaction(async (tx) => {
       if (existing) {
-        await tx.baselineEntry.deleteMany({ where: { baselineId: existing.id } });
-        await tx.growthRate.deleteMany({ where: { baselineId: existing.id } });
+        // Explicitly include companyId as defence-in-depth against cross-tenant deletion
+        await tx.baselineEntry.deleteMany({
+          where: { baselineId: existing.id, baseline: { companyId: ctx.companyId } },
+        });
+        await tx.growthRate.deleteMany({
+          where: { baselineId: existing.id, baseline: { companyId: ctx.companyId } },
+        });
         if (growthRates.length > 0) {
           await tx.growthRate.createMany({
             data: growthRates.map((gr) => ({ baselineId: existing.id, ...gr })),
