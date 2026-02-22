@@ -20,7 +20,8 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 const url = process.env.DATABASE_URL ?? "file:./prisma/dev.db";
-const adapter = new PrismaLibSql({ url });
+const authToken = process.env.DATABASE_AUTH_TOKEN;
+const adapter = new PrismaLibSql({ url, authToken });
 const db = new PrismaClient({ adapter } as never) as PrismaClient;
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
