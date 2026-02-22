@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { MapOverview } from "@/components/portfolio/map-overview";
 import { PlanGate } from "@/components/ui/plan-gate";
 
-export const metadata = { title: "Map Overview — Net Zero Tracker" };
+export const metadata = { title: "Map Overview — Net Zero Pathfinder" };
 
 export default async function MapOverviewPage() {
   const session = await auth();

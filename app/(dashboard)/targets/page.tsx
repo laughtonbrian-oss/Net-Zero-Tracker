@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { TargetsList } from "@/components/targets/targets-list";
 
-export const metadata = { title: "Emissions Targets — Net Zero Tracker" };
+export const metadata = { title: "Emissions Targets — Net Zero Pathfinder" };
 
 export default async function TargetsPage() {
   const session = await auth();

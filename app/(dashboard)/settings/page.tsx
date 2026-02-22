@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { SettingsView } from "@/components/settings/settings-view";
 
-export const metadata = { title: "Settings — Net Zero Tracker" };
+export const metadata = { title: "Settings — Net Zero Pathfinder" };
 
 export default async function SettingsPage() {
   const session = await auth();

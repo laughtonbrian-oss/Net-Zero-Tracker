@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { ReportView } from "@/components/report/report-view";
 
-export const metadata = { title: "Reports — Net Zero Tracker" };
+export const metadata = { title: "Reports — Net Zero Pathfinder" };
 
 export default async function ReportsPage() {
   const session = await auth();

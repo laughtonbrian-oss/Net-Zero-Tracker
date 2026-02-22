@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { ActualEmissionsForm } from "@/components/baseline/actual-emissions-form";
 
-export const metadata = { title: "Actual Emissions — Net Zero Tracker" };
+export const metadata = { title: "Actual Emissions — Net Zero Pathfinder" };
 
 export default async function ActualEmissionsPage() {
   const session = await auth();

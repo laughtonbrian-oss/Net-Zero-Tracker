@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { AlertsView } from "@/components/alerts/alerts-view";
 
-export const metadata = { title: "Alerts — Net Zero Tracker" };
+export const metadata = { title: "Alerts — Net Zero Pathfinder" };
 
 const currentYear = new Date().getFullYear();
 

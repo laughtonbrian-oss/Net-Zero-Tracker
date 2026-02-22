@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { EmissionFactorsView } from "@/components/settings/emission-factors-view";
 
-export const metadata = { title: "Emission Factors — Net Zero Tracker" };
+export const metadata = { title: "Emission Factors — Net Zero Pathfinder" };
 
 export default async function EmissionFactorsPage() {
   const session = await auth();

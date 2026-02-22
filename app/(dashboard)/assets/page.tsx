@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { AssetsList } from "@/components/assets/assets-list";
 
-export const metadata = { title: "Assets — Net Zero Tracker" };
+export const metadata = { title: "Assets — Net Zero Pathfinder" };
 
 export default async function AssetsPage() {
   const session = await auth();

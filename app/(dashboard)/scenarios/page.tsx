@@ -5,7 +5,7 @@ import { ScenariosView } from "@/components/scenarios/scenarios-view";
 import { ScenarioCompareView } from "@/components/scenarios/scenario-compare-view";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-export const metadata = { title: "Scenarios — Net Zero Tracker" };
+export const metadata = { title: "Scenarios — Net Zero Pathfinder" };
 
 export default async function ScenariosPage() {
   const session = await auth();

@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { EnergyDashboard } from "@/components/energy/energy-dashboard";
 
-export const metadata = { title: "Energy — Net Zero Tracker" };
+export const metadata = { title: "Energy — Net Zero Pathfinder" };
 
 export default async function EnergyPage() {
   const session = await auth();

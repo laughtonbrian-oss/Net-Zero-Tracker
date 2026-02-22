@@ -13,7 +13,7 @@ import {
 import Link from "next/link";
 import { KpiCards, type KpiItem } from "@/components/dashboard/kpi-cards";
 
-export const metadata = { title: "Dashboard — Net Zero Tracker" };
+export const metadata = { title: "Dashboard — Net Zero Pathfinder" };
 
 const currentYear = new Date().getFullYear();
 

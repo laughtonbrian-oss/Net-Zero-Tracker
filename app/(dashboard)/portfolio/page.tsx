@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { PortfolioView } from "@/components/portfolio/portfolio-view";
 import { PlanGate } from "@/components/ui/plan-gate";
 
-export const metadata = { title: "Portfolio — Net Zero Tracker" };
+export const metadata = { title: "Portfolio — Net Zero Pathfinder" };
 
 export default async function PortfolioPage() {
   const session = await auth();

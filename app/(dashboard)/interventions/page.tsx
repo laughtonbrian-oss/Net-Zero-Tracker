@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { InterventionsList } from "@/components/interventions/interventions-list";
 
-export const metadata = { title: "Interventions — Net Zero Tracker" };
+export const metadata = { title: "Interventions — Net Zero Pathfinder" };
 
 export default async function InterventionsPage() {
   const session = await auth();

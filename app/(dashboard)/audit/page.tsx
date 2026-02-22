@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { Role } from "@prisma/client";
 import { AuditLogView } from "@/components/audit/audit-log-view";
 
-export const metadata = { title: "Audit Log — Net Zero Tracker" };
+export const metadata = { title: "Audit Log — Net Zero Pathfinder" };
 
 export default async function AuditPage() {
   const session = await auth();

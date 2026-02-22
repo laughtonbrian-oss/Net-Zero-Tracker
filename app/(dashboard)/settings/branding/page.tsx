@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { BrandingView } from "@/components/settings/branding-view";
 
-export const metadata = { title: "Branding — Net Zero Tracker" };
+export const metadata = { title: "Branding — Net Zero Pathfinder" };
 
 export default async function BrandingPage() {
   const session = await auth();

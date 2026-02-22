@@ -209,7 +209,7 @@ export function ReportView({ company, baseline, targets, scenarios, intervention
           )}
           <div>
             <h2 className="text-2xl font-bold text-gray-900">{company?.name ?? "Company"}</h2>
-            <p className="text-sm text-gray-500">Net Zero Decarbonisation Report</p>
+            <p className="text-sm text-gray-500">Net Zero Pathfinder — Decarbonisation Report</p>
             <p className="text-xs text-gray-400">Generated {new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</p>
           </div>
         </div>

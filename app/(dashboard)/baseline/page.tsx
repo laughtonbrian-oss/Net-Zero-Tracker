@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { BaselineForm } from "@/components/baseline/baseline-form";
 
-export const metadata = { title: "Baseline Emissions — Net Zero Tracker" };
+export const metadata = { title: "Baseline Emissions — Net Zero Pathfinder" };
 
 export default async function BaselinePage() {
   const session = await auth();

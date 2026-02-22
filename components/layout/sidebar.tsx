@@ -92,7 +92,7 @@ export function Sidebar() {
             <Leaf className="h-4 w-4 text-white" />
           </div>
           <span className="text-sm font-semibold text-white tracking-tight leading-tight">
-            Net Zero<br />Tracker
+            Net Zero<br />Pathfinder
           </span>
         </div>
       </div>
@@ -172,7 +172,7 @@ export function Sidebar() {
 
       {/* Footer */}
       <div className="px-5 py-4 border-t border-slate-700/50">
-        <p className="text-xs text-slate-500">© {new Date().getFullYear()} Net Zero Tracker</p>
+        <p className="text-xs text-slate-500">© {new Date().getFullYear()} Net Zero Pathfinder</p>
       </div>
     </aside>
   );

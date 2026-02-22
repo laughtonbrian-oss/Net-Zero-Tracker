@@ -7,8 +7,8 @@ import { Providers } from "@/components/providers";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Net Zero Tracker",
-  description: "Track and plan your company's net zero program",
+  title: "Net Zero Pathfinder",
+  description: "Track and plan your company's net zero pathway",
 };
 
 export default function RootLayout({

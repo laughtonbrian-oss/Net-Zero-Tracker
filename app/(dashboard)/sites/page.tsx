@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { SitesView } from "@/components/sites/sites-view";
 
-export const metadata = { title: "Site Management — Net Zero Tracker" };
+export const metadata = { title: "Site Management — Net Zero Pathfinder" };
 
 export default async function SitesPage() {
   const session = await auth();

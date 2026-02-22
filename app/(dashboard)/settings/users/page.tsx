@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { UsersList } from "@/components/settings/users-list";
 import { Role } from "@prisma/client";
 
-export const metadata = { title: "Team — Net Zero Tracker" };
+export const metadata = { title: "Team — Net Zero Pathfinder" };
 
 export default async function UsersPage() {
   const session = await auth();
@@ -22,7 +22,7 @@ export default async function UsersPage() {
       <div>
         <h1 className="text-xl font-semibold text-gray-900">Team</h1>
         <p className="text-sm text-gray-500 mt-0.5">
-          Manage who has access to your organisation&apos;s Net Zero Tracker.
+          Manage who has access to your organisation&apos;s Net Zero Pathfinder.
         </p>
       </div>
       <UsersList initialUsers={users} currentUserId={session.user.id!} />
