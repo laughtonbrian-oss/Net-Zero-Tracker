@@ -1,8 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { SlidersHorizontal, X } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -51,11 +54,41 @@ function eolCount(assets: SiteData["assets"]) {
 }
 
 export function PortfolioView({ sites, baseline }: Props) {
+  const [filterCountry, setFilterCountry] = useState("");
+  const [filterSite, setFilterSite] = useState("");
+
   const baselineTotal = baseline
     ? baseline.entries.reduce((s, e) => s + e.emissionsTco2e, 0)
     : 0;
 
-  const rows = sites.map((site) => {
+  const availableCountries = useMemo(
+    () => Array.from(new Set(sites.map((s) => s.country).filter((c): c is string => !!c))).sort(),
+    [sites]
+  );
+
+  const availableSites = useMemo(
+    () => sites.filter((s) => !filterCountry || s.country === filterCountry),
+    [sites, filterCountry]
+  );
+
+  const filteredSites = useMemo(
+    () =>
+      sites.filter(
+        (s) =>
+          (!filterCountry || s.country === filterCountry) &&
+          (!filterSite || s.id === filterSite)
+      ),
+    [sites, filterCountry, filterSite]
+  );
+
+  const hasFilters = !!filterCountry || !!filterSite;
+
+  function clearFilters() {
+    setFilterCountry("");
+    setFilterSite("");
+  }
+
+  const rows = filteredSites.map((site) => {
     const totalAbatement = site.interventions.reduce((s, i) => s + i.totalReductionTco2e, 0);
     const eol = eolCount(site.assets);
     const totalKwh = site.assets.reduce((s, a) => s + (a.currentEnergyKwh ?? 0), 0);
@@ -65,13 +98,60 @@ export function PortfolioView({ sites, baseline }: Props) {
   // Sort by total abatement descending
   const sorted = [...rows].sort((a, b) => b.totalAbatement - a.totalAbatement);
 
-  const mappableSites = sites.filter(
+  const mappableSites = filteredSites.filter(
     (s): s is SiteData & { latitude: number; longitude: number } =>
       s.latitude !== null && s.longitude !== null
   );
 
   return (
     <div className="space-y-4">
+      {/* Filter bar */}
+      <div className="flex flex-wrap items-center gap-2">
+        <SlidersHorizontal className="h-4 w-4 text-gray-400 shrink-0" />
+        <Select
+          value={filterCountry || "__all__"}
+          onValueChange={(v) => {
+            setFilterCountry(v === "__all__" ? "" : v);
+            setFilterSite("");
+          }}
+        >
+          <SelectTrigger className="h-8 w-40 text-xs">
+            <SelectValue placeholder="All countries" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">All countries</SelectItem>
+            {availableCountries.map((c) => (
+              <SelectItem key={c} value={c}>{c}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select
+          value={filterSite || "__all__"}
+          onValueChange={(v) => setFilterSite(v === "__all__" ? "" : v)}
+        >
+          <SelectTrigger className="h-8 w-44 text-xs">
+            <SelectValue placeholder="All sites" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">All sites</SelectItem>
+            {availableSites.map((s) => (
+              <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {hasFilters && (
+          <Button variant="ghost" size="sm" className="h-8 px-2 text-xs text-gray-400" onClick={clearFilters}>
+            <X className="h-3.5 w-3.5 mr-1" />
+            Clear
+          </Button>
+        )}
+        {hasFilters && (
+          <span className="text-xs text-gray-400">
+            {filteredSites.length} of {sites.length} sites
+          </span>
+        )}
+      </div>
+
       <Tabs defaultValue="table">
         <TabsList className="border-b w-full justify-start rounded-none bg-transparent p-0 h-auto mb-4">
           {["table", "map"].map((t) => (
@@ -86,10 +166,10 @@ export function PortfolioView({ sites, baseline }: Props) {
         </TabsList>
 
         <TabsContent value="table">
-          {sites.length === 0 ? (
+          {filteredSites.length === 0 ? (
             <Card className="border-gray-200 shadow-none">
               <CardContent className="py-10 text-center text-sm text-gray-500">
-                No sites yet. Add sites via the Team settings page.
+                {hasFilters ? "No sites match the selected filters." : "No sites yet. Add sites via the Sites page."}
               </CardContent>
             </Card>
           ) : (

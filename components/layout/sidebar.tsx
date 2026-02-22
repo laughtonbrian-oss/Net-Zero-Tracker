@@ -22,6 +22,7 @@ import {
   FlaskConical,
   Palette,
   ClipboardList,
+  MapPin,
 } from "lucide-react";
 
 const mainNavHrefs = [
@@ -32,6 +33,7 @@ const mainNavHrefs = [
   { href: "/scenarios", key: "scenarios", icon: GitBranch },
   { href: "/assets", key: "assets", icon: Building2 },
   { href: "/portfolio", key: "portfolio", icon: Map },
+  { href: "/sites", key: "sites", icon: MapPin },
   { href: "/alerts", key: "alerts", icon: Bell },
   { href: "/energy", key: "energy", icon: Zap },
   { href: "/reports", key: "reports", icon: FileText },

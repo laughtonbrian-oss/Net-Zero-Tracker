@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SlidersHorizontal, X } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -20,7 +22,7 @@ import type { Intervention, InterventionAnnualReduction, InterventionDocument, S
 
 type InterventionWithRelations = Omit<Intervention, "scopesAffected"> & {
   scopesAffected: number[];
-  site: { id: string; name: string } | null;
+  site: { id: string; name: string; country: string | null } | null;
   businessUnit: { id: string; name: string } | null;
   annualReductions?: InterventionAnnualReduction[];
   documents?: InterventionDocument[];
@@ -70,12 +72,53 @@ export function InterventionsList({
   businessUnits,
 }: {
   initialInterventions: InterventionWithRelations[];
-  sites: Pick<Site, "id" | "name">[];
+  sites: Pick<Site, "id" | "name" | "country">[];
   businessUnits: Pick<BusinessUnit, "id" | "name">[];
 }) {
   const [items, setItems] = useState(initialInterventions);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<InterventionWithRelations | null>(null);
+  const [filterCountry, setFilterCountry] = useState("");
+  const [filterSite, setFilterSite] = useState("");
+  const [filterScopes, setFilterScopes] = useState<number[]>([]);
+
+  const availableCountries = useMemo(
+    () =>
+      Array.from(
+        new Set(sites.map((s) => s.country).filter((c): c is string => !!c))
+      ).sort(),
+    [sites]
+  );
+
+  const availableSitesForFilter = useMemo(
+    () => sites.filter((s) => !filterCountry || s.country === filterCountry),
+    [sites, filterCountry]
+  );
+
+  const filtered = useMemo(
+    () =>
+      items.filter((item) => {
+        if (filterCountry && item.site?.country !== filterCountry) return false;
+        if (filterSite && item.site?.id !== filterSite) return false;
+        if (filterScopes.length > 0 && !filterScopes.some((s) => item.scopesAffected.includes(s))) return false;
+        return true;
+      }),
+    [items, filterCountry, filterSite, filterScopes]
+  );
+
+  const hasFilters = !!filterCountry || !!filterSite || filterScopes.length > 0;
+
+  function toggleScope(scope: number) {
+    setFilterScopes((prev) =>
+      prev.includes(scope) ? prev.filter((s) => s !== scope) : [...prev, scope]
+    );
+  }
+
+  function clearFilters() {
+    setFilterCountry("");
+    setFilterSite("");
+    setFilterScopes([]);
+  }
 
   function openCreate() {
     setEditing(null);
@@ -106,15 +149,75 @@ export function InterventionsList({
     toast.success("Intervention deleted");
   }
 
-  const totalAbatement = items.reduce((s, i) => s + i.totalReductionTco2e, 0);
+  const filteredAbatement = filtered.reduce((s, i) => s + i.totalReductionTco2e, 0);
 
   return (
     <div className="space-y-4">
+      {/* Filter bar */}
+      <div className="flex flex-wrap items-center gap-2">
+        <SlidersHorizontal className="h-4 w-4 text-gray-400 shrink-0" />
+        {/* Scope toggles */}
+        {[1, 2, 3].map((s) => (
+          <button
+            key={s}
+            onClick={() => toggleScope(s)}
+            className={`h-8 px-3 rounded-md border text-xs font-medium transition-colors ${
+              filterScopes.includes(s)
+                ? "bg-emerald-600 border-emerald-600 text-white"
+                : "border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400 hover:border-gray-400"
+            }`}
+          >
+            S{s}
+          </button>
+        ))}
+        <Select
+          value={filterCountry || "__all__"}
+          onValueChange={(v) => {
+            setFilterCountry(v === "__all__" ? "" : v);
+            setFilterSite("");
+          }}
+        >
+          <SelectTrigger className="h-8 w-40 text-xs">
+            <SelectValue placeholder="All countries" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">All countries</SelectItem>
+            {availableCountries.map((c) => (
+              <SelectItem key={c} value={c}>{c}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select
+          value={filterSite || "__all__"}
+          onValueChange={(v) => setFilterSite(v === "__all__" ? "" : v)}
+        >
+          <SelectTrigger className="h-8 w-44 text-xs">
+            <SelectValue placeholder="All sites" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">All sites</SelectItem>
+            {availableSitesForFilter.map((s) => (
+              <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {hasFilters && (
+          <Button variant="ghost" size="sm" className="h-8 px-2 text-xs text-gray-400" onClick={clearFilters}>
+            <X className="h-3.5 w-3.5 mr-1" />
+            Clear
+          </Button>
+        )}
+      </div>
+
       <div className="flex items-center justify-between">
         <p className="text-sm text-gray-500 dark:text-slate-400">
-          {items.length} intervention{items.length !== 1 ? "s" : ""} ·{" "}
+          {hasFilters ? (
+            <>{filtered.length} of {items.length} interventions ·{" "}</>
+          ) : (
+            <>{items.length} intervention{items.length !== 1 ? "s" : ""} ·{" "}</>
+          )}
           <span className="font-medium text-gray-700 dark:text-slate-200">
-            {totalAbatement.toLocaleString(undefined, { maximumFractionDigits: 0 })} tCO₂e
+            {filteredAbatement.toLocaleString(undefined, { maximumFractionDigits: 0 })} tCO₂e
           </span>{" "}
           total potential abatement
         </p>
@@ -124,13 +227,19 @@ export function InterventionsList({
         </Button>
       </div>
 
-      {items.length === 0 ? (
+      {filtered.length === 0 ? (
         <Card className="border-gray-200 dark:border-slate-700 shadow-none bg-white dark:bg-slate-800">
           <CardContent className="py-10 text-center">
-            <p className="text-sm text-gray-500 dark:text-slate-400">No interventions yet.</p>
-            <Button variant="outline" size="sm" className="mt-3" onClick={openCreate}>
-              Add your first intervention
-            </Button>
+            {hasFilters ? (
+              <p className="text-sm text-gray-500 dark:text-slate-400">No interventions match the selected filters.</p>
+            ) : (
+              <>
+                <p className="text-sm text-gray-500 dark:text-slate-400">No interventions yet.</p>
+                <Button variant="outline" size="sm" className="mt-3" onClick={openCreate}>
+                  Add your first intervention
+                </Button>
+              </>
+            )}
           </CardContent>
         </Card>
       ) : (
@@ -149,7 +258,7 @@ export function InterventionsList({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {items.map((item) => (
+              {filtered.map((item) => (
                 <TableRow
                   key={item.id}
                   className="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors"

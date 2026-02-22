@@ -28,7 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Trash2, Download, X } from "lucide-react";
+import { Plus, Trash2, Download, X, SlidersHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import { GlidepathChart } from "@/components/charts/glidepath-chart";
 import { WedgeChart } from "@/components/charts/wedge-chart";
@@ -43,6 +43,7 @@ import { buildMACCData } from "@/lib/calculations/macc";
 import type { Scenario, Intervention, Baseline, Target, BaselineEntry } from "@prisma/client";
 
 type AnnualReduction = { year: number; tco2eReduction: number };
+type SiteSnippet = { id: string; name: string; country: string | null } | null;
 type ScenarioIntervention = {
   id: string;
   scenarioId: string;
@@ -61,10 +62,10 @@ type ScenarioIntervention = {
   personnelTimeDays: number | null;
   personnelRatePerDay: number | null;
   notes: string | null;
-  intervention: Intervention & { annualReductions: AnnualReduction[] };
+  intervention: Intervention & { annualReductions: AnnualReduction[]; site: SiteSnippet };
 };
 type ScenarioWithInterventions = Scenario & { interventions: ScenarioIntervention[] };
-type InterventionWithReductions = Intervention & { annualReductions: AnnualReduction[] };
+type InterventionWithReductions = Intervention & { annualReductions: AnnualReduction[]; site: SiteSnippet };
 type BaselineWithEntries = Baseline & { entries: BaselineEntry[] };
 
 type Props = {
@@ -92,10 +93,52 @@ export function ScenariosView({ initialScenarios, interventions, baseline, targe
   const [activeChartTab, setActiveChartTab] = useState("glidepath");
   const chartRef = useRef<HTMLDivElement>(null);
 
+  // Filters
+  const [filterScopes, setFilterScopes] = useState<number[]>([]);
+  const [filterFromYear, setFilterFromYear] = useState<string>("");
+  const [filterToYear, setFilterToYear] = useState<string>("");
+  const [filterCountry, setFilterCountry] = useState<string>("");
+  const [filterSite, setFilterSite] = useState<string>("");
+  const hasFilters = filterScopes.length > 0 || filterFromYear || filterToYear || filterCountry || filterSite;
+
   const activeScenario = scenarios.find((s) => s.id === activeId) ?? null;
   const selectedInterventionIds = new Set(
     activeScenario?.interventions.map((si) => si.interventionId) ?? []
   );
+
+  // Derived filter options from the active scenario's interventions
+  const availableCountries = [
+    ...new Set(
+      (activeScenario?.interventions ?? [])
+        .map((si) => si.intervention.site?.country)
+        .filter((c): c is string => !!c)
+    ),
+  ].sort();
+  const availableSites = (activeScenario?.interventions ?? [])
+    .filter((si) => si.intervention.site && (!filterCountry || si.intervention.site.country === filterCountry))
+    .map((si) => si.intervention.site!)
+    .filter((s, i, arr) => arr.findIndex((x) => x.id === s.id) === i)
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const filteredSIs = (activeScenario?.interventions ?? []).filter((si) => {
+    if (filterScopes.length > 0) {
+      let scopes: number[] = [];
+      try {
+        const parsed = JSON.parse(si.intervention.scopesAffected);
+        if (Array.isArray(parsed)) scopes = parsed;
+      } catch {
+        return false;
+      }
+      if (!filterScopes.some((s) => scopes.includes(s))) return false;
+    }
+    const from = filterFromYear ? parseInt(filterFromYear) : null;
+    const to = filterToYear ? parseInt(filterToYear) : null;
+    if (from && si.endYear && si.endYear < from) return false;
+    if (to && si.startYear > to) return false;
+    if (filterCountry && si.intervention.site?.country !== filterCountry) return false;
+    if (filterSite && si.intervention.site?.id !== filterSite) return false;
+    return true;
+  });
 
   const baselineYear = baseline?.year ?? new Date().getFullYear() - 1;
   const latestTargetYear = targets.reduce(
@@ -118,7 +161,7 @@ export function ScenariosView({ initialScenarios, interventions, baseline, targe
             ...baseline,
             entries: baseline.entries as { scope: number; emissionsTco2e: number }[],
           },
-          scenarioInterventions: activeScenario.interventions.map((si) => ({
+          scenarioInterventions: filteredSIs.map((si) => ({
             interventionId: si.interventionId,
             startYear: si.startYear,
             endYear: si.endYear,
@@ -143,9 +186,9 @@ export function ScenariosView({ initialScenarios, interventions, baseline, targe
       : [];
 
   const wedgeData =
-    activeScenario && activeScenario.interventions.length > 0
+    activeScenario && filteredSIs.length > 0
       ? buildWedgeData(
-          activeScenario.interventions.map((si) => ({
+          filteredSIs.map((si) => ({
             interventionId: si.interventionId,
             name: si.intervention.name,
             startYear: si.startYear,
@@ -164,12 +207,12 @@ export function ScenariosView({ initialScenarios, interventions, baseline, targe
       : [];
 
   const interventionNames = Object.fromEntries(
-    (activeScenario?.interventions ?? []).map((si) => [si.interventionId, si.intervention.name])
+    filteredSIs.map((si) => [si.interventionId, si.intervention.name])
   );
 
   const maccData = activeScenario
     ? buildMACCData(
-        activeScenario.interventions.map((si) => ({
+        filteredSIs.map((si) => ({
           interventionId: si.interventionId,
           name: si.intervention.name,
           category: si.intervention.category,
@@ -373,7 +416,7 @@ export function ScenariosView({ initialScenarios, interventions, baseline, targe
       {/* Scenario selector */}
       <div className="flex items-center gap-3">
         <div className="flex-1 max-w-xs">
-          <Select value={activeId ?? ""} onValueChange={setActiveId}>
+          <Select value={activeId ?? ""} onValueChange={(v) => { setActiveId(v); setFilterCountry(""); setFilterSite(""); setFilterScopes([]); setFilterFromYear(""); setFilterToYear(""); }}>
             <SelectTrigger>
               <SelectValue placeholder="Select a scenario" />
             </SelectTrigger>
@@ -407,6 +450,94 @@ export function ScenariosView({ initialScenarios, interventions, baseline, targe
           </>
         )}
       </div>
+
+      {/* Filter bar */}
+      {activeScenario && (
+        <div className="flex flex-wrap items-center gap-2 p-3 bg-gray-50 dark:bg-slate-800/50 rounded-xl border border-gray-200 dark:border-slate-700">
+          <SlidersHorizontal className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+
+          {/* Scope filter */}
+          <div className="flex items-center gap-1">
+            {[1, 2, 3].map((s) => (
+              <button
+                key={s}
+                onClick={() => setFilterScopes((prev) =>
+                  prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]
+                )}
+                className={`px-2 py-0.5 rounded text-xs font-medium border transition-colors ${
+                  filterScopes.includes(s)
+                    ? "bg-emerald-600 text-white border-emerald-600"
+                    : "bg-white dark:bg-slate-700 text-gray-600 dark:text-slate-300 border-gray-200 dark:border-slate-600 hover:border-emerald-400"
+                }`}
+              >
+                S{s}
+              </button>
+            ))}
+          </div>
+
+          {/* Time slice */}
+          <div className="flex items-center gap-1">
+            <Input
+              type="number" placeholder="From yr" min={2020} max={2060}
+              value={filterFromYear}
+              onChange={(e) => setFilterFromYear(e.target.value)}
+              className="h-7 w-20 text-xs"
+            />
+            <span className="text-xs text-gray-400">–</span>
+            <Input
+              type="number" placeholder="To yr" min={2020} max={2060}
+              value={filterToYear}
+              onChange={(e) => setFilterToYear(e.target.value)}
+              className="h-7 w-20 text-xs"
+            />
+          </div>
+
+          {/* Country filter */}
+          {availableCountries.length > 0 && (
+            <Select value={filterCountry} onValueChange={(v) => { setFilterCountry(v === "_all" ? "" : v); setFilterSite(""); }}>
+              <SelectTrigger className="h-7 w-36 text-xs">
+                <SelectValue placeholder="All countries" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="_all">All countries</SelectItem>
+                {availableCountries.map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          {/* Site filter */}
+          {availableSites.length > 0 && (
+            <Select value={filterSite} onValueChange={(v) => setFilterSite(v === "_all" ? "" : v)}>
+              <SelectTrigger className="h-7 w-40 text-xs">
+                <SelectValue placeholder="All sites" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="_all">All sites</SelectItem>
+                {availableSites.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          {hasFilters && (
+            <button
+              onClick={() => { setFilterScopes([]); setFilterFromYear(""); setFilterToYear(""); setFilterCountry(""); setFilterSite(""); }}
+              className="text-xs text-gray-400 hover:text-gray-700 dark:hover:text-slate-200 flex items-center gap-1"
+            >
+              <X className="h-3 w-3" /> Clear
+            </button>
+          )}
+
+          {hasFilters && (
+            <span className="ml-auto text-xs text-gray-400">
+              {filteredSIs.length} / {activeScenario.interventions.length} interventions shown
+            </span>
+          )}
+        </div>
+      )}
 
       {scenarios.length === 0 ? (
         <Card className="border-gray-200 shadow-none">
@@ -562,7 +693,7 @@ export function ScenariosView({ initialScenarios, interventions, baseline, targe
                 <p className="text-sm font-medium text-gray-700">
                   Interventions in this scenario
                   <span className="ml-2 text-xs text-gray-400 font-normal">
-                    ({activeScenario.interventions.length})
+                    ({hasFilters ? `${filteredSIs.length} of ${activeScenario.interventions.length}` : activeScenario.interventions.length})
                   </span>
                 </p>
                 <Button size="sm" variant="outline" onClick={() => setAddOpen(true)}>
@@ -599,7 +730,7 @@ export function ScenariosView({ initialScenarios, interventions, baseline, targe
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {activeScenario.interventions.map((si) => (
+                      {filteredSIs.map((si) => (
                         <TableRow
                           key={si.id}
                           className="cursor-pointer hover:bg-gray-50"

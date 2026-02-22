@@ -15,14 +15,14 @@ export default async function InterventionsPage() {
     db.intervention.findMany({
       where: { companyId },
       include: {
-        site: { select: { id: true, name: true } },
+        site: { select: { id: true, name: true, country: true } },
         businessUnit: { select: { id: true, name: true } },
         annualReductions: { orderBy: { year: "asc" } },
         documents: true,
       },
       orderBy: { createdAt: "desc" },
     }),
-    db.site.findMany({ where: { companyId }, orderBy: { name: "asc" } }),
+    db.site.findMany({ where: { companyId }, select: { id: true, name: true, country: true }, orderBy: { name: "asc" } }),
     db.businessUnit.findMany({ where: { companyId }, orderBy: { name: "asc" } }),
   ]);
 

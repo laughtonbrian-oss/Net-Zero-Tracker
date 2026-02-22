@@ -180,19 +180,25 @@ model Target {
 // ─── Grouping ─────────────────────────────────────────────────────────────────
 
 model Site {
-  id             String         @id @default(cuid())
-  companyId      String
-  name           String
-  address        String?
-  region         String?
-  country        String?
-  latitude       Float?
-  longitude      Float?
+  id               String         @id @default(cuid())
+  companyId        String
+  name             String
+  address          String?
+  city             String?
+  region           String?
+  country          String?
+  latitude         Float?
+  longitude        Float?
+  siteType         String?        // office | warehouse | manufacturing | retail | data_centre | other
+  grossFloorAreaM2 Float?
+  yearBuilt        Int?
+  siteManager      String?
+  notes            String?
 
-  company        Company        @relation(fields: [companyId], references: [id])
-  interventions  Intervention[]
-  assets         Asset[]
-  energyReadings EnergyReading[]
+  company          Company        @relation(fields: [companyId], references: [id])
+  interventions    Intervention[]
+  assets           Asset[]
+  energyReadings   EnergyReading[]
 }
 
 model BusinessUnit {

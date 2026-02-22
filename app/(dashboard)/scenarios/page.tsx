@@ -20,7 +20,10 @@ export default async function ScenariosPage() {
         interventions: {
           include: {
             intervention: {
-              include: { annualReductions: { orderBy: { year: "asc" } } },
+              include: {
+                annualReductions: { orderBy: { year: "asc" } },
+                site: { select: { id: true, name: true, country: true } },
+              },
             },
           },
         },
@@ -29,7 +32,10 @@ export default async function ScenariosPage() {
     }),
     db.intervention.findMany({
       where: { companyId },
-      include: { annualReductions: { orderBy: { year: "asc" } } },
+      include: {
+        annualReductions: { orderBy: { year: "asc" } },
+        site: { select: { id: true, name: true, country: true } },
+      },
       orderBy: { name: "asc" },
     }),
     db.baseline.findFirst({
