@@ -21,7 +21,16 @@ export async function GET(request: Request) {
     const year = searchParams.get("year");
 
     const where: Record<string, unknown> = { companyId: ctx.companyId };
-    if (siteId) where.siteId = siteId;
+    if (siteId) {
+      // Validate the siteId belongs to this tenant before using it as a filter
+      const site = await db.site.findFirst({
+        where: { id: siteId, companyId: ctx.companyId },
+      });
+      if (!site) {
+        return NextResponse.json({ error: "Site not found" }, { status: 404 });
+      }
+      where.siteId = siteId;
+    }
     if (year) where.year = parseInt(year);
 
     const readings = await db.energyReading.findMany({

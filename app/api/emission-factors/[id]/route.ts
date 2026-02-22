@@ -20,7 +20,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    await db.companyEmissionFactor.delete({ where: { id } });
+    await db.companyEmissionFactor.delete({ where: { id, companyId: ctx.companyId } });
     return NextResponse.json({ data: { success: true } });
   } catch (err) {
     if (err instanceof Response) return err;
