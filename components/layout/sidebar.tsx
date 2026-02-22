@@ -36,6 +36,7 @@ const topNavHrefs = [
 ] as const;
 
 const portfolioNavHrefs = [
+  { href: "/portfolio/map", key: "mapOverview", icon: Map },
   { href: "/sites", key: "sites", icon: MapPin },
   { href: "/interventions", key: "interventions", icon: Lightbulb },
   { href: "/assets", key: "assets", icon: Building2 },
