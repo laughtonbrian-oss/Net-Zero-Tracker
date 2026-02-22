@@ -119,10 +119,15 @@ async function main() {
       companyId: meridian.id,
       name: "Sheffield Works",
       address: "Newhall Road, Sheffield, S9 2QL",
+      city: "Sheffield",
       region: "Yorkshire",
       country: "United Kingdom",
       latitude: 53.3949,
       longitude: -1.4185,
+      siteType: "manufacturing",
+      grossFloorAreaM2: 18500,
+      yearBuilt: 1978,
+      siteManager: "James Whitmore",
     },
   });
   const manchester = await db.site.create({
@@ -130,10 +135,15 @@ async function main() {
       companyId: meridian.id,
       name: "Manchester Distribution Centre",
       address: "Port Salford, Salford, M5 2XS",
+      city: "Salford",
       region: "Greater Manchester",
       country: "United Kingdom",
       latitude: 53.4788,
       longitude: -2.301,
+      siteType: "warehouse",
+      grossFloorAreaM2: 12000,
+      yearBuilt: 2005,
+      siteManager: "James Whitmore",
     },
   });
   const bristol = await db.site.create({
@@ -141,10 +151,15 @@ async function main() {
       companyId: meridian.id,
       name: "Bristol Assembly",
       address: "Aztec West Business Park, Bristol, BS32 4TD",
+      city: "Bristol",
       region: "West of England",
       country: "United Kingdom",
       latitude: 51.5237,
       longitude: -2.5427,
+      siteType: "manufacturing",
+      grossFloorAreaM2: 8200,
+      yearBuilt: 1998,
+      siteManager: "James Whitmore",
     },
   });
   const chicago = await db.site.create({
@@ -152,10 +167,15 @@ async function main() {
       companyId: meridian.id,
       name: "Chicago Manufacturing Hub",
       address: "2200 S Halsted St, Chicago, IL 60608",
+      city: "Chicago",
       region: "Illinois",
       country: "United States",
       latitude: 41.8781,
       longitude: -87.6298,
+      siteType: "manufacturing",
+      grossFloorAreaM2: 14300,
+      yearBuilt: 1992,
+      siteManager: "Sarah Chen",
     },
   });
   const houston = await db.site.create({
@@ -163,10 +183,15 @@ async function main() {
       companyId: meridian.id,
       name: "Houston Operations Centre",
       address: "8900 N Sam Houston Pkwy E, Houston, TX 77064",
+      city: "Houston",
       region: "Texas",
       country: "United States",
       latitude: 29.7604,
       longitude: -95.3698,
+      siteType: "manufacturing",
+      grossFloorAreaM2: 9800,
+      yearBuilt: 2001,
+      siteManager: "Sarah Chen",
     },
   });
   const losAngeles = await db.site.create({
@@ -174,10 +199,15 @@ async function main() {
       companyId: meridian.id,
       name: "Los Angeles Facility",
       address: "2401 E 8th St, Los Angeles, CA 90021",
+      city: "Los Angeles",
       region: "California",
       country: "United States",
       latitude: 34.0537,
       longitude: -118.2427,
+      siteType: "warehouse",
+      grossFloorAreaM2: 7400,
+      yearBuilt: 2008,
+      siteManager: "Sarah Chen",
     },
   });
   const seattle = await db.site.create({
@@ -185,10 +215,15 @@ async function main() {
       companyId: meridian.id,
       name: "Seattle Tech Centre",
       address: "4000 Aurora Ave N, Seattle, WA 98103",
+      city: "Seattle",
       region: "Washington",
       country: "United States",
       latitude: 47.548,
       longitude: -122.3553,
+      siteType: "office",
+      grossFloorAreaM2: 3600,
+      yearBuilt: 2015,
+      siteManager: "Priya Patel",
     },
   });
   const atlanta = await db.site.create({
@@ -196,10 +231,15 @@ async function main() {
       companyId: meridian.id,
       name: "Atlanta Distribution",
       address: "3200 Piedmont Rd NE, Atlanta, GA 30305",
+      city: "Atlanta",
       region: "Georgia",
       country: "United States",
       latitude: 33.749,
       longitude: -84.388,
+      siteType: "warehouse",
+      grossFloorAreaM2: 11200,
+      yearBuilt: 2003,
+      siteManager: "James Whitmore",
     },
   });
   const denver = await db.site.create({
@@ -207,10 +247,15 @@ async function main() {
       companyId: meridian.id,
       name: "Denver Regional Office",
       address: "1700 Lincoln St, Denver, CO 80203",
+      city: "Denver",
       region: "Colorado",
       country: "United States",
       latitude: 39.7392,
       longitude: -104.9903,
+      siteType: "office",
+      grossFloorAreaM2: 2200,
+      yearBuilt: 2012,
+      siteManager: "Priya Patel",
     },
   });
   const toronto = await db.site.create({
@@ -218,10 +263,15 @@ async function main() {
       companyId: meridian.id,
       name: "Toronto Assembly Plant",
       address: "1 Port Industrial Blvd, Toronto, ON M5A 1A4",
+      city: "Toronto",
       region: "Ontario",
       country: "Canada",
       latitude: 43.6532,
       longitude: -79.3832,
+      siteType: "manufacturing",
+      grossFloorAreaM2: 16800,
+      yearBuilt: 1985,
+      siteManager: "Sarah Chen",
     },
   });
   const vancouver = await db.site.create({
@@ -229,10 +279,15 @@ async function main() {
       companyId: meridian.id,
       name: "Vancouver Logistics",
       address: "1200 Terminal Ave, Vancouver, BC V6A 2R2",
+      city: "Vancouver",
       region: "British Columbia",
       country: "Canada",
       latitude: 49.2827,
       longitude: -123.1207,
+      siteType: "warehouse",
+      grossFloorAreaM2: 8900,
+      yearBuilt: 2010,
+      siteManager: "James Whitmore",
     },
   });
   const calgary = await db.site.create({
@@ -240,10 +295,15 @@ async function main() {
       companyId: meridian.id,
       name: "Calgary Processing Facility",
       address: "4500 52 Ave SE, Calgary, AB T2B 3R2",
+      city: "Calgary",
       region: "Alberta",
       country: "Canada",
       latitude: 51.0447,
       longitude: -114.0719,
+      siteType: "manufacturing",
+      grossFloorAreaM2: 6500,
+      yearBuilt: 1996,
+      siteManager: "James Whitmore",
     },
   });
   const warsaw = await db.site.create({
@@ -251,10 +311,15 @@ async function main() {
       companyId: meridian.id,
       name: "Warsaw European Hub",
       address: "ul. Puławska 182, 02-670 Warszawa",
+      city: "Warsaw",
       region: "Masovian",
       country: "Poland",
       latitude: 52.2297,
       longitude: 21.0122,
+      siteType: "manufacturing",
+      grossFloorAreaM2: 10400,
+      yearBuilt: 2007,
+      siteManager: "James Whitmore",
     },
   });
   console.log(`✅  Sites: 13 total (3 UK, 6 US, 3 Canada, 1 Poland)`);
@@ -1553,7 +1618,7 @@ async function main() {
     data: { companyId: apex.id, name: "David Walsh", email: "david.walsh@apexcomposites.co.uk", password: pw, role: "ADMIN" },
   });
   const apexSite = await db.site.create({
-    data: { companyId: apex.id, name: "Apex Composites — Coventry", address: "Middlemarch Business Park, Coventry, CV3 4FJ", region: "West Midlands", country: "United Kingdom", latitude: 52.3777, longitude: -1.4984 },
+    data: { companyId: apex.id, name: "Apex Composites — Coventry", address: "Middlemarch Business Park, Coventry, CV3 4FJ", city: "Coventry", region: "West Midlands", country: "United Kingdom", latitude: 52.3777, longitude: -1.4984, siteType: "manufacturing", grossFloorAreaM2: 4800, yearBuilt: 2002, siteManager: "David Walsh" },
   });
   const apexBaseline = await db.baseline.create({
     data: {
