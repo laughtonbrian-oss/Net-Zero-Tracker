@@ -1,0 +1,67 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "baseline": "Baseline",
+    "targets": "Targets",
+    "interventions": "Interventions",
+    "scenarios": "Scenarios",
+    "assets": "Assets",
+    "portfolio": "Portfolio",
+    "alerts": "Alerts",
+    "energy": "Energy",
+    "reports": "Reports",
+    "team": "Team",
+    "settings": "Settings",
+    "emissionFactors": "Emission Factors",
+    "branding": "Branding",
+    "auditLog": "Audit Log",
+    "admin": "Admin"
+  },
+  "auth": {
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "signInMicrosoft": "Sign in with Microsoft",
+    "email": "Email",
+    "password": "Password",
+    "createAccount": "Create account",
+    "companyName": "Company name",
+    "fullName": "Full name",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?",
+    "register": "Register"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "baselineEmissions": "Baseline Emissions",
+    "reductionTarget": "Reduction Target",
+    "totalAbatement": "Total Abatement",
+    "targetCoverage": "Target Coverage",
+    "noBaseline": "No baseline yet",
+    "noTarget": "No target set"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "create": "Create",
+    "loading": "Loading…",
+    "noData": "No data",
+    "actions": "Actions",
+    "confirm": "Confirm",
+    "back": "Back",
+    "name": "Name",
+    "description": "Description",
+    "status": "Status",
+    "year": "Year",
+    "scope": "Scope"
+  },
+  "plan": {
+    "upgrade": "Upgrade to Pro",
+    "upgradeMessage": "This feature is available on the Pro plan.",
+    "currentPlan": "Current plan",
+    "free": "Free",
+    "pro": "Pro"
+  }
+}

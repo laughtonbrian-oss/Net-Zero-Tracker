@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { LogOut, User } from "lucide-react";
+import { LanguageSwitcher } from "@/components/layout/language-switcher";
 
 export function Header() {
   const { data: session } = useSession();
@@ -23,7 +24,8 @@ export function Header() {
     .slice(0, 2);
 
   return (
-    <header className="h-14 border-b border-gray-200 bg-white flex items-center justify-end px-6 shrink-0">
+    <header className="h-14 border-b border-gray-200 bg-white flex items-center justify-end gap-2 px-6 shrink-0">
+      <LanguageSwitcher />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-8 w-8 rounded-full p-0">

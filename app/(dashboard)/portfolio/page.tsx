@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { PortfolioView } from "@/components/portfolio/portfolio-view";
+import { PlanGate } from "@/components/ui/plan-gate";
 
 export const metadata = { title: "Portfolio — Net Zero Tracker" };
 
@@ -11,7 +12,7 @@ export default async function PortfolioPage() {
 
   const companyId = session.user.companyId;
 
-  const [sites, baseline] = await Promise.all([
+  const [sites, baseline, company] = await Promise.all([
     db.site.findMany({
       where: { companyId },
       include: {
@@ -38,6 +39,10 @@ export default async function PortfolioPage() {
       where: { companyId },
       include: { entries: true },
     }),
+    db.company.findUnique({
+      where: { id: companyId },
+      select: { plan: true },
+    }),
   ]);
 
   return (
@@ -48,7 +53,9 @@ export default async function PortfolioPage() {
           League table and map view across all sites.
         </p>
       </div>
-      <PortfolioView sites={sites} baseline={baseline} />
+      <PlanGate plan={company?.plan} feature="portfolioMap">
+        <PortfolioView sites={sites} baseline={baseline} />
+      </PlanGate>
     </div>
   );
 }

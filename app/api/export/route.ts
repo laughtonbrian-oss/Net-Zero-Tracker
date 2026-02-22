@@ -6,6 +6,15 @@ import * as XLSX from "xlsx";
 export async function GET(req: Request) {
   try {
     const ctx = await getTenantContext();
+
+    const company = await db.company.findUnique({
+      where: { id: ctx.companyId },
+      select: { plan: true },
+    });
+    if (company?.plan !== "PAID") {
+      return NextResponse.json({ error: "Pro plan required" }, { status: 403 });
+    }
+
     const { searchParams } = new URL(req.url);
     const scenarioId = searchParams.get("scenarioId");
 

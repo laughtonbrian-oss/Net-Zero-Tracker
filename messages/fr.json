@@ -1,0 +1,67 @@
+{
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "baseline": "Référence",
+    "targets": "Objectifs",
+    "interventions": "Interventions",
+    "scenarios": "Scénarios",
+    "assets": "Actifs",
+    "portfolio": "Portefeuille",
+    "alerts": "Alertes",
+    "energy": "Énergie",
+    "reports": "Rapports",
+    "team": "Équipe",
+    "settings": "Paramètres",
+    "emissionFactors": "Facteurs d'émission",
+    "branding": "Marque",
+    "auditLog": "Journal d'audit",
+    "admin": "Admin"
+  },
+  "auth": {
+    "signIn": "Se connecter",
+    "signOut": "Se déconnecter",
+    "signInMicrosoft": "Se connecter avec Microsoft",
+    "email": "E-mail",
+    "password": "Mot de passe",
+    "createAccount": "Créer un compte",
+    "companyName": "Nom de l'entreprise",
+    "fullName": "Nom complet",
+    "noAccount": "Pas de compte ?",
+    "haveAccount": "Vous avez déjà un compte ?",
+    "register": "S'inscrire"
+  },
+  "dashboard": {
+    "title": "Tableau de bord",
+    "baselineEmissions": "Émissions de référence",
+    "reductionTarget": "Objectif de réduction",
+    "totalAbatement": "Réduction totale",
+    "targetCoverage": "Couverture de l'objectif",
+    "noBaseline": "Aucune référence",
+    "noTarget": "Aucun objectif défini"
+  },
+  "common": {
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "add": "Ajouter",
+    "create": "Créer",
+    "loading": "Chargement…",
+    "noData": "Aucune donnée",
+    "actions": "Actions",
+    "confirm": "Confirmer",
+    "back": "Retour",
+    "name": "Nom",
+    "description": "Description",
+    "status": "Statut",
+    "year": "Année",
+    "scope": "Portée"
+  },
+  "plan": {
+    "upgrade": "Passer à Pro",
+    "upgradeMessage": "Cette fonctionnalité est disponible dans le forfait Pro.",
+    "currentPlan": "Forfait actuel",
+    "free": "Gratuit",
+    "pro": "Pro"
+  }
+}

@@ -29,6 +29,7 @@ type ScenarioIntervention = {
 type ScenarioWithInterventions = Scenario & { interventions: ScenarioIntervention[] };
 type BaselineWithEntries = Baseline & { entries: BaselineEntry[] };
 
+// TODO: gate behind PlanGate feature='scenarioComparison'
 type Props = {
   scenarios: ScenarioWithInterventions[];
   baseline: BaselineWithEntries;
