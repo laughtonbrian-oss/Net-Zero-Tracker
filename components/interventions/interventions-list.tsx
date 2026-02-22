@@ -15,22 +15,54 @@ import {
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { InterventionDialog } from "./intervention-dialog";
+import { StatusBadge } from "@/components/ui/status-badge";
 import type { Intervention, InterventionAnnualReduction, InterventionDocument, Site, BusinessUnit } from "@prisma/client";
 
 type InterventionWithRelations = Omit<Intervention, "scopesAffected"> & {
-  scopesAffected: number[]; // stored as JSON string in DB; API returns parsed array
+  scopesAffected: number[];
   site: { id: string; name: string } | null;
   businessUnit: { id: string; name: string } | null;
   annualReductions?: InterventionAnnualReduction[];
   documents?: InterventionDocument[];
 };
 
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  PLANNED: { label: "Planned", color: "bg-blue-50 text-blue-700 border-blue-200" },
-  IN_PROGRESS: { label: "In progress", color: "bg-amber-50 text-amber-700 border-amber-200" },
-  COMPLETED: { label: "Completed", color: "bg-green-50 text-green-700 border-green-200" },
-  ABANDONED: { label: "Abandoned", color: "bg-gray-50 text-gray-500 border-gray-200" },
-};
+const currentYear = new Date().getFullYear();
+
+function ProgressBar({ startYear, fullYear, status }: { startYear: number; fullYear: number; status: string }) {
+  let pct = 0;
+  if (status === "COMPLETED") {
+    pct = 100;
+  } else if (status === "ABANDONED") {
+    pct = 0;
+  } else if (currentYear >= fullYear) {
+    pct = 100;
+  } else if (currentYear <= startYear) {
+    pct = 0;
+  } else {
+    pct = Math.round(((currentYear - startYear) / (fullYear - startYear)) * 100);
+  }
+
+  const barColor =
+    status === "COMPLETED"
+      ? "bg-emerald-500"
+      : status === "ABANDONED"
+      ? "bg-gray-300 dark:bg-slate-600"
+      : pct >= 100
+      ? "bg-emerald-500"
+      : "bg-emerald-400";
+
+  return (
+    <div className="flex items-center gap-2 min-w-[80px]">
+      <div className="flex-1 h-1.5 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-all ${barColor}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <span className="text-xs text-gray-400 dark:text-slate-500 tabular-nums w-7 text-right">{pct}%</span>
+    </div>
+  );
+}
 
 export function InterventionsList({
   initialInterventions,
@@ -79,9 +111,9 @@ export function InterventionsList({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-500 dark:text-slate-400">
           {items.length} intervention{items.length !== 1 ? "s" : ""} ·{" "}
-          <span className="font-medium text-gray-700">
+          <span className="font-medium text-gray-700 dark:text-slate-200">
             {totalAbatement.toLocaleString(undefined, { maximumFractionDigits: 0 })} tCO₂e
           </span>{" "}
           total potential abatement
@@ -93,44 +125,47 @@ export function InterventionsList({
       </div>
 
       {items.length === 0 ? (
-        <Card className="border-gray-200 shadow-none">
+        <Card className="border-gray-200 dark:border-slate-700 shadow-none bg-white dark:bg-slate-800">
           <CardContent className="py-10 text-center">
-            <p className="text-sm text-gray-500">No interventions yet.</p>
+            <p className="text-sm text-gray-500 dark:text-slate-400">No interventions yet.</p>
             <Button variant="outline" size="sm" className="mt-3" onClick={openCreate}>
               Add your first intervention
             </Button>
           </CardContent>
         </Card>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <TableHead>Name</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Scope(s)</TableHead>
-              <TableHead>Reduction (tCO₂e)</TableHead>
-              <TableHead>Timeline</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="w-20"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {items.map((item) => {
-              const st = STATUS_LABELS[item.status] ?? STATUS_LABELS.PLANNED;
-              return (
-                <TableRow key={item.id}>
-                  <TableCell className="font-medium max-w-xs truncate">
-                    {item.name}
+        <div className="rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden bg-white dark:bg-slate-800">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent bg-gray-50 dark:bg-slate-800/80">
+                <TableHead className="text-xs">Name</TableHead>
+                <TableHead className="text-xs">Category</TableHead>
+                <TableHead className="text-xs">Scope(s)</TableHead>
+                <TableHead className="text-xs">Reduction (tCO₂e)</TableHead>
+                <TableHead className="text-xs">Timeline</TableHead>
+                <TableHead className="text-xs">Progress</TableHead>
+                <TableHead className="text-xs">Status</TableHead>
+                <TableHead className="w-20" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {items.map((item) => (
+                <TableRow
+                  key={item.id}
+                  className="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors"
+                >
+                  <TableCell className="font-medium max-w-xs">
+                    <span className="truncate block">{item.name}</span>
                     {item.owner && (
-                      <span className="block text-xs text-gray-400">{item.owner}</span>
+                      <span className="block text-xs text-gray-400 dark:text-slate-500">{item.owner}</span>
                     )}
                     {(item.site || item.businessUnit) && (
-                      <span className="block text-xs text-gray-400">
+                      <span className="block text-xs text-gray-400 dark:text-slate-500">
                         {[item.site?.name, item.businessUnit?.name].filter(Boolean).join(" · ")}
                       </span>
                     )}
                   </TableCell>
-                  <TableCell className="text-sm text-gray-600">{item.category}</TableCell>
+                  <TableCell className="text-sm text-gray-600 dark:text-slate-400">{item.category}</TableCell>
                   <TableCell>
                     <div className="flex gap-1">
                       {item.scopesAffected.map((s) => (
@@ -140,20 +175,23 @@ export function InterventionsList({
                       ))}
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-sm tabular-nums">
                     {item.totalReductionTco2e.toLocaleString(undefined, {
                       maximumFractionDigits: 0,
                     })}
                   </TableCell>
-                  <TableCell className="text-sm text-gray-600">
+                  <TableCell className="text-sm text-gray-600 dark:text-slate-400">
                     {item.implementationStartYear}–{item.fullBenefitYear}
                   </TableCell>
                   <TableCell>
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs border ${st.color}`}
-                    >
-                      {st.label}
-                    </span>
+                    <ProgressBar
+                      startYear={item.implementationStartYear}
+                      fullYear={item.fullBenefitYear}
+                      status={item.status}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <StatusBadge status={item.status as "PLANNED" | "IN_PROGRESS" | "COMPLETED" | "ABANDONED"} />
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
@@ -176,10 +214,10 @@ export function InterventionsList({
                     </div>
                   </TableCell>
                 </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
 
       <InterventionDialog

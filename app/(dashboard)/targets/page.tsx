@@ -17,8 +17,8 @@ export default async function TargetsPage() {
   return (
     <div className="max-w-3xl space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-gray-900">Emissions Targets</h1>
-        <p className="text-sm text-gray-500 mt-0.5">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Emissions Targets</h1>
+        <p className="text-sm text-gray-500 mt-0.5 dark:text-slate-400">
           Define absolute reduction targets by scope and year.
         </p>
       </div>

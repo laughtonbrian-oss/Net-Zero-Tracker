@@ -83,10 +83,19 @@ export function MACCChart({ data }: Props) {
       .attr("class", "bar")
       .attr("x", (d) => xScale(d.x0) + 1)
       .attr("width", (d) => Math.max(1, xScale(d.x1) - xScale(d.x0) - 2))
-      .attr("y", (d) => (d.mac >= 0 ? yScale(d.mac) : yScale(0)))
-      .attr("height", (d) => Math.abs(yScale(d.mac) - yScale(0)))
+      .attr("y", yScale(0))
+      .attr("height", 0)
       .attr("fill", (d) => colorScale(d.mac))
       .attr("rx", 2)
+      .transition()
+      .duration(800)
+      .delay((_, i) => i * 15)
+      .attr("y", (d) => (d.mac >= 0 ? yScale(d.mac) : yScale(0)))
+      .attr("height", (d) => Math.abs(yScale(d.mac) - yScale(0)));
+
+    type BarDatum = (typeof bars)[number];
+    // Re-add hover listeners after transition (need a selection without transition)
+    svg.selectAll<SVGRectElement, BarDatum>(".bar")
       .on("mouseover", (event: MouseEvent, d) => {
         tooltip
           .html(

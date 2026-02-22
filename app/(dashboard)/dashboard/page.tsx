@@ -13,6 +13,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import Link from "next/link";
+import { KpiCards, type KpiItem } from "@/components/dashboard/kpi-cards";
 
 export const metadata = { title: "Dashboard — Net Zero Tracker" };
 
@@ -59,16 +60,18 @@ export default async function DashboardPage() {
     (i) => i.status === "PLANNED" && i.implementationStartYear < currentYear
   ).length;
 
-  const kpis = [
+  const kpis: KpiItem[] = [
     {
       label: "Baseline Emissions",
       value: totalBaseline > 0
         ? `${totalBaseline.toLocaleString(undefined, { maximumFractionDigits: 0 })} tCO₂e`
         : "—",
+      numericValue: totalBaseline > 0 ? Math.round(totalBaseline) : null,
+      suffix: "tCO₂e",
       sub: baseline ? `Base year ${baseline.year}` : "No baseline yet",
-      icon: BarChart2,
-      iconBg: "bg-emerald-50",
-      iconColor: "text-emerald-600",
+      iconName: "BarChart2",
+      iconBg: "bg-emerald-50 dark:bg-emerald-900/30",
+      iconColor: "text-emerald-600 dark:text-emerald-400",
       href: "/baseline",
     },
     {
@@ -76,12 +79,14 @@ export default async function DashboardPage() {
       value: primaryTarget
         ? `${primaryTarget.reductionPct}% by ${primaryTarget.targetYear}`
         : "—",
+      numericValue: null,
+      suffix: "",
       sub: primaryTarget
         ? `${(totalBaseline * primaryTarget.reductionPct / 100).toLocaleString(undefined, { maximumFractionDigits: 0 })} tCO₂e to reduce`
         : "No target set",
-      icon: Target,
-      iconBg: "bg-blue-50",
-      iconColor: "text-blue-600",
+      iconName: "Target",
+      iconBg: "bg-blue-50 dark:bg-blue-900/30",
+      iconColor: "text-blue-600 dark:text-blue-400",
       href: "/targets",
     },
     {
@@ -89,10 +94,12 @@ export default async function DashboardPage() {
       value: totalAbatement > 0
         ? `${totalAbatement.toLocaleString(undefined, { maximumFractionDigits: 0 })} tCO₂e`
         : "—",
+      numericValue: totalAbatement > 0 ? Math.round(totalAbatement) : null,
+      suffix: "tCO₂e",
       sub: `${interventions.length} intervention${interventions.length !== 1 ? "s" : ""} · ${interventions.filter((i) => i.status === "IN_PROGRESS").length} in progress`,
-      icon: Zap,
-      iconBg: "bg-yellow-50",
-      iconColor: "text-yellow-600",
+      iconName: "Zap",
+      iconBg: "bg-yellow-50 dark:bg-yellow-900/30",
+      iconColor: "text-yellow-600 dark:text-yellow-400",
       href: "/interventions",
     },
     {
@@ -100,10 +107,12 @@ export default async function DashboardPage() {
       value: primaryTarget && totalBaseline > 0
         ? `${coveragePct.toFixed(0)}%`
         : "—",
+      numericValue: primaryTarget && totalBaseline > 0 ? Math.round(coveragePct) : null,
+      suffix: "%",
       sub: `${scenarios.length} scenario${scenarios.length !== 1 ? "s" : ""}`,
-      icon: TrendingDown,
-      iconBg: coveragePct >= 100 ? "bg-emerald-50" : coveragePct >= 50 ? "bg-amber-50" : "bg-red-50",
-      iconColor: coveragePct >= 100 ? "text-emerald-600" : coveragePct >= 50 ? "text-amber-600" : "text-red-500",
+      iconName: "TrendingDown",
+      iconBg: coveragePct >= 100 ? "bg-emerald-50 dark:bg-emerald-900/30" : coveragePct >= 50 ? "bg-amber-50 dark:bg-amber-900/30" : "bg-red-50 dark:bg-red-900/30",
+      iconColor: coveragePct >= 100 ? "text-emerald-600 dark:text-emerald-400" : coveragePct >= 50 ? "text-amber-600 dark:text-amber-400" : "text-red-500 dark:text-red-400",
       href: "/scenarios",
     },
   ];
@@ -117,39 +126,24 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
-        <p className="text-sm text-gray-500 mt-0.5">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+        <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
           Overview of your net zero program
         </p>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {kpis.map(({ label, value, sub, icon: Icon, iconBg, iconColor, href }) => (
-          <Link key={label} href={href} className="block group">
-            <Card className="border-gray-200 shadow-none hover:border-emerald-200 hover:shadow-sm transition-all">
-              <CardContent className="p-5">
-                <div className="flex items-start justify-between mb-3">
-                  <div className={`h-9 w-9 rounded-lg ${iconBg} flex items-center justify-center`}>
-                    <Icon className={`h-4.5 w-4.5 ${iconColor}`} />
-                  </div>
-                  <ArrowRight className="h-4 w-4 text-gray-300 group-hover:text-emerald-500 transition-colors mt-1" />
-                </div>
-                <p className="text-2xl font-bold text-gray-900 leading-tight">{value}</p>
-                <p className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">{label}</p>
-                <p className="text-xs text-gray-500 mt-1">{sub}</p>
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
-      </div>
+      {/* KPI Cards — client component with count-up animation */}
+      <KpiCards
+        items={kpis}
+        icons={[BarChart2, Target, Zap, TrendingDown]}
+      />
 
       {/* Alerts banner */}
       {(eolAlerts > 0 || overdueCount > 0) && (
         <Link href="/alerts">
-          <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 hover:bg-amber-100 transition-colors">
-            <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
-            <p className="text-sm text-amber-800">
+          <div className="flex items-center gap-3 rounded-xl border border-amber-200 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-900/20 px-4 py-3 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors">
+            <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
+            <p className="text-sm text-amber-800 dark:text-amber-300">
               {[
                 eolAlerts > 0 && `${eolAlerts} asset${eolAlerts !== 1 ? "s" : ""} approaching end of life`,
                 overdueCount > 0 && `${overdueCount} overdue intervention${overdueCount !== 1 ? "s" : ""}`,
@@ -157,25 +151,25 @@ export default async function DashboardPage() {
                 .filter(Boolean)
                 .join(" · ")}
             </p>
-            <ArrowRight className="h-4 w-4 text-amber-600 ml-auto shrink-0" />
+            <ArrowRight className="h-4 w-4 text-amber-600 dark:text-amber-400 ml-auto shrink-0" />
           </div>
         </Link>
       )}
 
       {/* Get started prompt */}
       {totalBaseline === 0 && (
-        <div className="rounded-xl border border-dashed border-emerald-200 bg-emerald-50/40 p-8 text-center">
-          <div className="mx-auto mb-3 h-12 w-12 rounded-full bg-emerald-100 flex items-center justify-center">
-            <BarChart2 className="h-6 w-6 text-emerald-600" />
+        <div className="rounded-xl border border-dashed border-emerald-200 dark:border-emerald-800/50 bg-emerald-50/40 dark:bg-emerald-900/10 p-8 text-center">
+          <div className="mx-auto mb-3 h-12 w-12 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
+            <BarChart2 className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
           </div>
-          <p className="text-sm font-semibold text-gray-800">Get started</p>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm font-semibold text-gray-800 dark:text-white">Get started</p>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
             Begin by entering your{" "}
-            <Link href="/baseline" className="text-emerald-700 font-medium hover:underline">
+            <Link href="/baseline" className="text-emerald-700 dark:text-emerald-400 font-medium hover:underline">
               baseline emissions
             </Link>
             , then set{" "}
-            <Link href="/targets" className="text-emerald-700 font-medium hover:underline">
+            <Link href="/targets" className="text-emerald-700 dark:text-emerald-400 font-medium hover:underline">
               reduction targets
             </Link>
             .
@@ -185,17 +179,17 @@ export default async function DashboardPage() {
 
       {/* Quick links */}
       <div>
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">Explore</h2>
+        <h2 className="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-3">Explore</h2>
         <div className="grid grid-cols-3 gap-4">
           {quickLinks.map(({ label, desc, icon: Icon, href }) => (
             <Link key={label} href={href} className="block group">
-              <Card className="border-gray-200 shadow-none hover:border-emerald-200 hover:shadow-sm transition-all h-full">
+              <Card className="border-gray-200 dark:border-slate-700 shadow-none transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-emerald-200 dark:hover:border-emerald-700 h-full bg-white dark:bg-slate-800">
                 <CardContent className="p-5">
-                  <div className="h-8 w-8 rounded-lg bg-gray-100 flex items-center justify-center mb-3 group-hover:bg-emerald-50 transition-colors">
-                    <Icon className="h-4 w-4 text-gray-500 group-hover:text-emerald-600 transition-colors" />
+                  <div className="h-8 w-8 rounded-lg bg-gray-100 dark:bg-slate-700 flex items-center justify-center mb-3 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/30 transition-colors">
+                    <Icon className="h-4 w-4 text-gray-500 dark:text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors" />
                   </div>
-                  <p className="text-sm font-semibold text-gray-900">{label}</p>
-                  <p className="text-xs text-gray-500 mt-1">{desc}</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">{label}</p>
+                  <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">{desc}</p>
                 </CardContent>
               </Card>
             </Link>

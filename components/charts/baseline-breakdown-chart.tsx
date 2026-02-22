@@ -88,6 +88,8 @@ export function BaselineBreakdownChart({ entries }: Props) {
               dataKey={`Scope ${scope}`}
               stackId="a"
               fill={colorForScope(scope, idx)}
+              isAnimationActive
+              animationDuration={800}
             />
           ))}
         </BarChart>

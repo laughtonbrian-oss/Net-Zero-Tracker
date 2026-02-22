@@ -56,14 +56,14 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="w-56 shrink-0 border-r border-gray-200 bg-white min-h-screen flex flex-col">
+    <aside className="w-56 shrink-0 border-r border-slate-700/50 bg-slate-900 min-h-screen flex flex-col">
       {/* Logo */}
-      <div className="px-5 py-5 border-b border-gray-200">
-        <div className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-md bg-emerald-600 flex items-center justify-center shrink-0">
+      <div className="px-5 py-5 border-b border-slate-700/50">
+        <div className="flex items-center gap-2.5">
+          <div className="h-7 w-7 rounded-md bg-emerald-500 flex items-center justify-center shrink-0 shadow-sm shadow-emerald-900/40">
             <Leaf className="h-4 w-4 text-white" />
           </div>
-          <span className="text-sm font-semibold text-gray-900 tracking-tight leading-tight">
+          <span className="text-sm font-semibold text-white tracking-tight leading-tight">
             Net Zero<br />Tracker
           </span>
         </div>
@@ -78,14 +78,14 @@ export function Sidebar() {
             className={cn(
               "flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors",
               isActive(href)
-                ? "bg-emerald-50 text-emerald-700 font-medium"
-                : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+                ? "bg-emerald-600/20 text-emerald-400 font-medium"
+                : "text-slate-400 hover:bg-slate-800 hover:text-white"
             )}
           >
             <Icon
               className={cn(
                 "h-4 w-4 shrink-0",
-                isActive(href) ? "text-emerald-600" : "text-gray-400"
+                isActive(href) ? "text-emerald-400" : "text-slate-500"
               )}
             />
             {label}
@@ -95,7 +95,7 @@ export function Sidebar() {
         {isAdmin && (
           <>
             <div className="pt-4 pb-1 px-3">
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Admin</p>
+              <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Admin</p>
             </div>
             {adminNavItems.map(({ href, label, icon: Icon }) => (
               <Link
@@ -104,14 +104,14 @@ export function Sidebar() {
                 className={cn(
                   "flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors",
                   isActive(href)
-                    ? "bg-emerald-50 text-emerald-700 font-medium"
-                    : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+                    ? "bg-emerald-600/20 text-emerald-400 font-medium"
+                    : "text-slate-400 hover:bg-slate-800 hover:text-white"
                 )}
               >
                 <Icon
                   className={cn(
                     "h-4 w-4 shrink-0",
-                    isActive(href) ? "text-emerald-600" : "text-gray-400"
+                    isActive(href) ? "text-emerald-400" : "text-slate-500"
                   )}
                 />
                 {label}
@@ -122,8 +122,8 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="px-5 py-4 border-t border-gray-100">
-        <p className="text-xs text-gray-400">© {new Date().getFullYear()} Net Zero Tracker</p>
+      <div className="px-5 py-4 border-t border-slate-700/50">
+        <p className="text-xs text-slate-500">© {new Date().getFullYear()} Net Zero Tracker</p>
       </div>
     </aside>
   );

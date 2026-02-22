@@ -1,6 +1,7 @@
 "use client";
 
 import { signOut, useSession } from "next-auth/react";
+import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -10,11 +11,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { LogOut, User } from "lucide-react";
+import { LogOut, User, Moon, Sun } from "lucide-react";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 
 export function Header() {
   const { data: session } = useSession();
+  const { theme, setTheme } = useTheme();
   const name = session?.user?.name ?? session?.user?.email ?? "User";
   const initials = name
     .split(" ")
@@ -24,8 +26,20 @@ export function Header() {
     .slice(0, 2);
 
   return (
-    <header className="h-14 border-b border-gray-200 bg-white flex items-center justify-end gap-2 px-6 shrink-0">
+    <header className="h-14 border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-end gap-2 px-6 shrink-0">
       <LanguageSwitcher />
+
+      {/* Dark mode toggle */}
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-8 w-8 p-0 text-gray-400 hover:text-gray-700 dark:text-slate-400 dark:hover:text-white"
+        onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+        title="Toggle dark mode"
+      >
+        {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+      </Button>
+
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-8 w-8 rounded-full p-0">

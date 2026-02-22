@@ -39,7 +39,7 @@ function CustomTooltip({
 }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-3 text-xs max-w-xs">
+    <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-md p-3 text-xs max-w-xs">
       <p className="font-semibold text-gray-900 mb-2">{label}</p>
       {payload
         .filter((p) => p.value != null && p.value !== 0)
@@ -142,6 +142,8 @@ export function GlidepathChart({ data, baselineYear, targets }: Props) {
           strokeWidth={0.5}
           maxBarSize={18}
           radius={[2, 2, 0, 0]}
+          isAnimationActive
+          animationDuration={800}
         />
 
         {/* BAU trajectory line — sits above bars */}
@@ -154,6 +156,8 @@ export function GlidepathChart({ data, baselineYear, targets }: Props) {
           strokeDasharray="6 4"
           dot={false}
           activeDot={{ r: 3 }}
+          isAnimationActive
+          animationDuration={800}
         />
 
         {/* Target line */}
@@ -167,6 +171,8 @@ export function GlidepathChart({ data, baselineYear, targets }: Props) {
           dot={false}
           activeDot={{ r: 3 }}
           connectNulls
+          isAnimationActive
+          animationDuration={800}
         />
 
         {/* Actual emissions scatter */}
