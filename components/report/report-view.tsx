@@ -123,7 +123,32 @@ export function ReportView({ company, baseline, targets, scenarios, intervention
     if (!reportRef.current) return;
     const { default: html2canvas } = await import("html2canvas");
     const { default: jsPDF } = await import("jspdf");
-    const canvas = await html2canvas(reportRef.current, { backgroundColor: "#ffffff", scale: 2 });
+    const canvas = await html2canvas(reportRef.current, {
+      backgroundColor: "#ffffff",
+      scale: 2,
+      onclone: (doc) => {
+        // Tailwind v4 injects @supports (color: lab()) blocks that override
+        // CSS variables with lab() values — html2canvas can't parse them.
+        // Appending this <style> after existing sheets wins by cascade order.
+        const style = doc.createElement("style");
+        style.textContent = `
+          :root {
+            --background: #ffffff; --foreground: #18181b;
+            --card: #ffffff; --card-foreground: #18181b;
+            --popover: #ffffff; --popover-foreground: #18181b;
+            --primary: #10b981; --primary-foreground: #fafafa;
+            --secondary: #f4f4f5; --secondary-foreground: #27272a;
+            --muted: #f4f4f5; --muted-foreground: #71717a;
+            --accent: #ecfdf5; --accent-foreground: #065f46;
+            --destructive: #dc2626;
+            --border: #e4e4e7; --input: #e4e4e7; --ring: #10b981;
+            --chart-1: #10b981; --chart-2: #34d399; --chart-3: #059669;
+            --chart-4: #fbbf24; --chart-5: #71717a;
+          }
+        `;
+        doc.head.appendChild(style);
+      },
+    });
     const imgData = canvas.toDataURL("image/png");
     const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
     const pageW = pdf.internal.pageSize.getWidth();
