@@ -3,9 +3,13 @@
  *
  * Run with:  npx tsx prisma/seed.ts
  *
- * 32 interventions across all 13 sites, both scenarios, technicalAssetLife on every
- * ScenarioIntervention record. Designed for a visually rich MACC chart with bars both
- * sides of zero.
+ * Meridian Forge:
+ *   Baseline  45,000 tCO₂e (2022) — S1: 15,500 | S2: 12,500 | S3: 17,000
+ *   Sites     14 (3 UK, 6 US, 3 Canada, 1 Poland, 1 UK HQ)
+ *   Interventions  15 across sites + company-wide
+ *   Scenarios 3 (Ambitious 2040 / Moderate 2045 / Conservative 2050)
+ *   Assets    56 across all 14 sites
+ *   Actuals   2022-2025, energy readings for 5 sites, 6 emission factors
  */
 
 import { PrismaClient } from "@prisma/client";
@@ -29,7 +33,7 @@ async function hash(pw: string) {
 function ramp(
   startYear: number,
   fullYear: number,
-  annualAtFull: number
+  annualAtFull: number,
 ): Array<{ year: number; tco2eReduction: number }> {
   const steps = Math.max(1, fullYear - startYear + 1);
   const r = [];
@@ -86,245 +90,155 @@ async function main() {
 
   const sarah = await db.user.create({
     data: {
-      companyId: meridian.id,
-      name: "Sarah Chen",
-      email: "sarah.chen@meridianforge.co.uk",
-      password: pw,
-      role: "ADMIN",
+      companyId: meridian.id, name: "Sarah Chen",
+      email: "sarah.chen@meridianforge.co.uk", password: pw, role: "ADMIN",
     },
   });
   const james = await db.user.create({
     data: {
-      companyId: meridian.id,
-      name: "James Whitmore",
-      email: "james.whitmore@meridianforge.co.uk",
-      password: pw,
-      role: "EDITOR",
+      companyId: meridian.id, name: "James Whitmore",
+      email: "james.whitmore@meridianforge.co.uk", password: pw, role: "EDITOR",
     },
   });
   const priya = await db.user.create({
     data: {
-      companyId: meridian.id,
-      name: "Priya Patel",
-      email: "priya.patel@meridianforge.co.uk",
-      password: pw,
-      role: "VIEWER",
+      companyId: meridian.id, name: "Priya Patel",
+      email: "priya.patel@meridianforge.co.uk", password: pw, role: "VIEWER",
     },
   });
   console.log(`✅  Users: ${sarah.name} (Admin), ${james.name} (Editor), ${priya.name} (Viewer)`);
 
-  // ── Sites ─────────────────────────────────────────────────────────────────
+  // ── Sites (14) ────────────────────────────────────────────────────────────
+
   const sheffield = await db.site.create({
     data: {
-      companyId: meridian.id,
-      name: "Sheffield Works",
-      address: "Newhall Road, Sheffield, S9 2QL",
-      city: "Sheffield",
-      region: "Yorkshire",
-      country: "United Kingdom",
-      latitude: 53.3949,
-      longitude: -1.4185,
-      siteType: "manufacturing",
-      grossFloorAreaM2: 18500,
-      yearBuilt: 1978,
-      siteManager: "James Whitmore",
+      companyId: meridian.id, name: "Sheffield Works",
+      address: "Newhall Road, Sheffield, S9 2QL", city: "Sheffield",
+      region: "Yorkshire", country: "United Kingdom",
+      latitude: 53.3949, longitude: -1.4185, siteType: "manufacturing",
+      grossFloorAreaM2: 18500, yearBuilt: 1978, siteManager: "James Whitmore",
     },
   });
   const manchester = await db.site.create({
     data: {
-      companyId: meridian.id,
-      name: "Manchester Distribution Centre",
-      address: "Port Salford, Salford, M5 2XS",
-      city: "Salford",
-      region: "Greater Manchester",
-      country: "United Kingdom",
-      latitude: 53.4788,
-      longitude: -2.301,
-      siteType: "warehouse",
-      grossFloorAreaM2: 12000,
-      yearBuilt: 2005,
-      siteManager: "James Whitmore",
+      companyId: meridian.id, name: "Manchester Distribution Centre",
+      address: "Port Salford, Salford, M5 2XS", city: "Salford",
+      region: "Greater Manchester", country: "United Kingdom",
+      latitude: 53.4788, longitude: -2.301, siteType: "warehouse",
+      grossFloorAreaM2: 12000, yearBuilt: 2005, siteManager: "James Whitmore",
     },
   });
   const bristol = await db.site.create({
     data: {
-      companyId: meridian.id,
-      name: "Bristol Assembly",
-      address: "Aztec West Business Park, Bristol, BS32 4TD",
-      city: "Bristol",
-      region: "West of England",
-      country: "United Kingdom",
-      latitude: 51.5237,
-      longitude: -2.5427,
-      siteType: "manufacturing",
-      grossFloorAreaM2: 8200,
-      yearBuilt: 1998,
-      siteManager: "James Whitmore",
+      companyId: meridian.id, name: "Bristol Assembly",
+      address: "Aztec West Business Park, Bristol, BS32 4TD", city: "Bristol",
+      region: "West of England", country: "United Kingdom",
+      latitude: 51.5237, longitude: -2.5427, siteType: "manufacturing",
+      grossFloorAreaM2: 8200, yearBuilt: 1998, siteManager: "James Whitmore",
+    },
+  });
+  const birmingham = await db.site.create({
+    data: {
+      companyId: meridian.id, name: "Birmingham Corporate HQ",
+      address: "One Brindleyplace, Birmingham, B1 2JB", city: "Birmingham",
+      region: "West Midlands", country: "United Kingdom",
+      latitude: 52.4814, longitude: -1.9112, siteType: "office",
+      grossFloorAreaM2: 5500, yearBuilt: 2018, siteManager: "Sarah Chen",
     },
   });
   const chicago = await db.site.create({
     data: {
-      companyId: meridian.id,
-      name: "Chicago Manufacturing Hub",
-      address: "2200 S Halsted St, Chicago, IL 60608",
-      city: "Chicago",
-      region: "Illinois",
-      country: "United States",
-      latitude: 41.8781,
-      longitude: -87.6298,
-      siteType: "manufacturing",
-      grossFloorAreaM2: 14300,
-      yearBuilt: 1992,
-      siteManager: "Sarah Chen",
+      companyId: meridian.id, name: "Chicago Manufacturing Hub",
+      address: "2200 S Halsted St, Chicago, IL 60608", city: "Chicago",
+      region: "Illinois", country: "United States",
+      latitude: 41.8781, longitude: -87.6298, siteType: "manufacturing",
+      grossFloorAreaM2: 14300, yearBuilt: 1992, siteManager: "Sarah Chen",
     },
   });
   const houston = await db.site.create({
     data: {
-      companyId: meridian.id,
-      name: "Houston Operations Centre",
-      address: "8900 N Sam Houston Pkwy E, Houston, TX 77064",
-      city: "Houston",
-      region: "Texas",
-      country: "United States",
-      latitude: 29.7604,
-      longitude: -95.3698,
-      siteType: "manufacturing",
-      grossFloorAreaM2: 9800,
-      yearBuilt: 2001,
-      siteManager: "Sarah Chen",
+      companyId: meridian.id, name: "Houston Operations Centre",
+      address: "8900 N Sam Houston Pkwy E, Houston, TX 77064", city: "Houston",
+      region: "Texas", country: "United States",
+      latitude: 29.7604, longitude: -95.3698, siteType: "manufacturing",
+      grossFloorAreaM2: 9800, yearBuilt: 2001, siteManager: "Sarah Chen",
     },
   });
   const losAngeles = await db.site.create({
     data: {
-      companyId: meridian.id,
-      name: "Los Angeles Facility",
-      address: "2401 E 8th St, Los Angeles, CA 90021",
-      city: "Los Angeles",
-      region: "California",
-      country: "United States",
-      latitude: 34.0537,
-      longitude: -118.2427,
-      siteType: "warehouse",
-      grossFloorAreaM2: 7400,
-      yearBuilt: 2008,
-      siteManager: "Sarah Chen",
+      companyId: meridian.id, name: "Los Angeles Facility",
+      address: "2401 E 8th St, Los Angeles, CA 90021", city: "Los Angeles",
+      region: "California", country: "United States",
+      latitude: 34.0537, longitude: -118.2427, siteType: "warehouse",
+      grossFloorAreaM2: 7400, yearBuilt: 2008, siteManager: "Sarah Chen",
     },
   });
   const seattle = await db.site.create({
     data: {
-      companyId: meridian.id,
-      name: "Seattle Tech Centre",
-      address: "4000 Aurora Ave N, Seattle, WA 98103",
-      city: "Seattle",
-      region: "Washington",
-      country: "United States",
-      latitude: 47.548,
-      longitude: -122.3553,
-      siteType: "office",
-      grossFloorAreaM2: 3600,
-      yearBuilt: 2015,
-      siteManager: "Priya Patel",
+      companyId: meridian.id, name: "Seattle Tech Centre",
+      address: "4000 Aurora Ave N, Seattle, WA 98103", city: "Seattle",
+      region: "Washington", country: "United States",
+      latitude: 47.548, longitude: -122.3553, siteType: "office",
+      grossFloorAreaM2: 3600, yearBuilt: 2015, siteManager: "Priya Patel",
     },
   });
   const atlanta = await db.site.create({
     data: {
-      companyId: meridian.id,
-      name: "Atlanta Distribution",
-      address: "3200 Piedmont Rd NE, Atlanta, GA 30305",
-      city: "Atlanta",
-      region: "Georgia",
-      country: "United States",
-      latitude: 33.749,
-      longitude: -84.388,
-      siteType: "warehouse",
-      grossFloorAreaM2: 11200,
-      yearBuilt: 2003,
-      siteManager: "James Whitmore",
+      companyId: meridian.id, name: "Atlanta Distribution",
+      address: "3200 Piedmont Rd NE, Atlanta, GA 30305", city: "Atlanta",
+      region: "Georgia", country: "United States",
+      latitude: 33.749, longitude: -84.388, siteType: "warehouse",
+      grossFloorAreaM2: 11200, yearBuilt: 2003, siteManager: "James Whitmore",
     },
   });
   const denver = await db.site.create({
     data: {
-      companyId: meridian.id,
-      name: "Denver Regional Office",
-      address: "1700 Lincoln St, Denver, CO 80203",
-      city: "Denver",
-      region: "Colorado",
-      country: "United States",
-      latitude: 39.7392,
-      longitude: -104.9903,
-      siteType: "office",
-      grossFloorAreaM2: 2200,
-      yearBuilt: 2012,
-      siteManager: "Priya Patel",
+      companyId: meridian.id, name: "Denver Regional Office",
+      address: "1700 Lincoln St, Denver, CO 80203", city: "Denver",
+      region: "Colorado", country: "United States",
+      latitude: 39.7392, longitude: -104.9903, siteType: "office",
+      grossFloorAreaM2: 2200, yearBuilt: 2012, siteManager: "Priya Patel",
     },
   });
   const toronto = await db.site.create({
     data: {
-      companyId: meridian.id,
-      name: "Toronto Assembly Plant",
-      address: "1 Port Industrial Blvd, Toronto, ON M5A 1A4",
-      city: "Toronto",
-      region: "Ontario",
-      country: "Canada",
-      latitude: 43.6532,
-      longitude: -79.3832,
-      siteType: "manufacturing",
-      grossFloorAreaM2: 16800,
-      yearBuilt: 1985,
-      siteManager: "Sarah Chen",
+      companyId: meridian.id, name: "Toronto Assembly Plant",
+      address: "1 Port Industrial Blvd, Toronto, ON M5A 1A4", city: "Toronto",
+      region: "Ontario", country: "Canada",
+      latitude: 43.6532, longitude: -79.3832, siteType: "manufacturing",
+      grossFloorAreaM2: 16800, yearBuilt: 1985, siteManager: "Sarah Chen",
     },
   });
   const vancouver = await db.site.create({
     data: {
-      companyId: meridian.id,
-      name: "Vancouver Logistics",
-      address: "1200 Terminal Ave, Vancouver, BC V6A 2R2",
-      city: "Vancouver",
-      region: "British Columbia",
-      country: "Canada",
-      latitude: 49.2827,
-      longitude: -123.1207,
-      siteType: "warehouse",
-      grossFloorAreaM2: 8900,
-      yearBuilt: 2010,
-      siteManager: "James Whitmore",
+      companyId: meridian.id, name: "Vancouver Logistics",
+      address: "1200 Terminal Ave, Vancouver, BC V6A 2R2", city: "Vancouver",
+      region: "British Columbia", country: "Canada",
+      latitude: 49.2827, longitude: -123.1207, siteType: "warehouse",
+      grossFloorAreaM2: 8900, yearBuilt: 2010, siteManager: "James Whitmore",
     },
   });
   const calgary = await db.site.create({
     data: {
-      companyId: meridian.id,
-      name: "Calgary Processing Facility",
-      address: "4500 52 Ave SE, Calgary, AB T2B 3R2",
-      city: "Calgary",
-      region: "Alberta",
-      country: "Canada",
-      latitude: 51.0447,
-      longitude: -114.0719,
-      siteType: "manufacturing",
-      grossFloorAreaM2: 6500,
-      yearBuilt: 1996,
-      siteManager: "James Whitmore",
+      companyId: meridian.id, name: "Calgary Processing Facility",
+      address: "4500 52 Ave SE, Calgary, AB T2B 3R2", city: "Calgary",
+      region: "Alberta", country: "Canada",
+      latitude: 51.0447, longitude: -114.0719, siteType: "manufacturing",
+      grossFloorAreaM2: 6500, yearBuilt: 1996, siteManager: "James Whitmore",
     },
   });
   const warsaw = await db.site.create({
     data: {
-      companyId: meridian.id,
-      name: "Warsaw European Hub",
-      address: "ul. Puławska 182, 02-670 Warszawa",
-      city: "Warsaw",
-      region: "Masovian",
-      country: "Poland",
-      latitude: 52.2297,
-      longitude: 21.0122,
-      siteType: "manufacturing",
-      grossFloorAreaM2: 10400,
-      yearBuilt: 2007,
-      siteManager: "James Whitmore",
+      companyId: meridian.id, name: "Warsaw European Hub",
+      address: "ul. Puławska 182, 02-670 Warszawa", city: "Warsaw",
+      region: "Masovian", country: "Poland",
+      latitude: 52.2297, longitude: 21.0122, siteType: "manufacturing",
+      grossFloorAreaM2: 10400, yearBuilt: 2007, siteManager: "James Whitmore",
     },
   });
-  console.log(`✅  Sites: 13 total (3 UK, 6 US, 3 Canada, 1 Poland)`);
+  console.log(`✅  Sites: 14 total (4 UK, 6 US, 3 Canada, 1 Poland)`);
 
-  // ── Business Units ─────────────────────────────────────────────────────────
+  // ── Business Units ────────────────────────────────────────────────────────
   const buManufacturing = await db.businessUnit.create({
     data: { companyId: meridian.id, name: "Manufacturing" },
   });
@@ -336,1277 +250,1313 @@ async function main() {
   });
   console.log(`✅  Business units: Manufacturing, Logistics & Distribution, Corporate & Facilities`);
 
-  // ── Baseline ──────────────────────────────────────────────────────────────
+  // ── Baseline: 45,000 tCO₂e (2022) ────────────────────────────────────────
   const baseline = await db.baseline.create({
     data: {
       companyId: meridian.id,
       year: 2022,
-      growthRatePct: 1.2,
+      growthRatePct: 1.5,
       entries: {
         create: [
-          { scope: 1, category: "Natural Gas Combustion", emissionsTco2e: 4200 },
-          { scope: 1, category: "Diesel Fleet & Plant", emissionsTco2e: 1850 },
-          { scope: 1, category: "Fugitive Emissions (Refrigerants)", emissionsTco2e: 650 },
-          { scope: 2, category: "Purchased Electricity", emissionsTco2e: 3800 },
-          { scope: 3, category: "Purchased Goods & Services", emissionsTco2e: 4200 },
-          { scope: 3, category: "Employee Commuting", emissionsTco2e: 580 },
-          { scope: 3, category: "Business Travel", emissionsTco2e: 320 },
-          { scope: 3, category: "Upstream Transport & Distribution", emissionsTco2e: 1100 },
-          { scope: 3, category: "Downstream Transport", emissionsTco2e: 820 },
-          { scope: 3, category: "Waste Generated in Operations", emissionsTco2e: 280 },
+          // Scope 1 — 15,500 tCO₂e
+          { scope: 1, category: "Natural Gas Combustion", emissionsTco2e: 6800 },
+          { scope: 1, category: "Diesel Fleet & Plant", emissionsTco2e: 4500 },
+          { scope: 1, category: "Fugitive Emissions (Refrigerants)", emissionsTco2e: 1800 },
+          { scope: 1, category: "Process Emissions (Furnaces)", emissionsTco2e: 2400 },
+          // Scope 2 — 12,500 tCO₂e
+          { scope: 2, category: "Purchased Electricity", emissionsTco2e: 11200 },
+          { scope: 2, category: "District Heating (Warsaw)", emissionsTco2e: 1300 },
+          // Scope 3 — 17,000 tCO₂e
+          { scope: 3, category: "Purchased Goods & Services", emissionsTco2e: 8200 },
+          { scope: 3, category: "Employee Commuting", emissionsTco2e: 1400 },
+          { scope: 3, category: "Business Travel", emissionsTco2e: 950 },
+          { scope: 3, category: "Upstream Transport & Distribution", emissionsTco2e: 3200 },
+          { scope: 3, category: "Downstream Transport", emissionsTco2e: 2100 },
+          { scope: 3, category: "Waste Generated in Operations", emissionsTco2e: 750 },
+          { scope: 3, category: "Capital Goods", emissionsTco2e: 400 },
         ],
       },
     },
   });
   await db.growthRate.createMany({
     data: [
-      { baselineId: baseline.id, fromYear: 2023, toYear: 2030, ratePct: 1.2 },
-      { baselineId: baseline.id, fromYear: 2031, toYear: 2040, ratePct: 0.5 },
-      { baselineId: baseline.id, fromYear: 2041, toYear: 2050, ratePct: 0.0 },
+      { baselineId: baseline.id, fromYear: 2023, toYear: 2028, ratePct: 1.5 },
+      { baselineId: baseline.id, fromYear: 2029, toYear: 2038, ratePct: 0.8 },
+      { baselineId: baseline.id, fromYear: 2039, toYear: 2050, ratePct: 0.0 },
     ],
   });
-  console.log(`✅  Baseline: 2022, 17,800 tCO₂e (S1: 6,700 | S2: 3,800 | S3: 7,300)`);
+  console.log(`✅  Baseline: 2022, 45,000 tCO₂e (S1: 15,500 | S2: 12,500 | S3: 17,000)`);
 
   // ── Targets ───────────────────────────────────────────────────────────────
   await db.target.createMany({
     data: [
       {
         companyId: meridian.id,
-        label: "SBTi Near-Term — 50% Scope 1+2 by 2030",
-        scopeCombination: "1+2",
-        targetYear: 2030,
-        reductionPct: 50,
-        isInterim: true,
-        isSbtiAligned: true,
+        label: "SBTi Near-Term — 46.2% Scope 1+2 by 2030",
+        scopeCombination: "1+2", targetYear: 2030, reductionPct: 46.2,
+        isInterim: true, isSbtiAligned: true,
+      },
+      {
+        companyId: meridian.id,
+        label: "Interim — 72% Scope 1+2+3 by 2035",
+        scopeCombination: "1+2+3", targetYear: 2035, reductionPct: 72,
+        isInterim: true, isSbtiAligned: false,
       },
       {
         companyId: meridian.id,
         label: "Net Zero — 90% Scope 1+2+3 by 2050",
-        scopeCombination: "1+2+3",
-        targetYear: 2050,
-        reductionPct: 90,
-        isInterim: false,
-        isSbtiAligned: true,
+        scopeCombination: "1+2+3", targetYear: 2050, reductionPct: 90,
+        isInterim: false, isSbtiAligned: true,
       },
     ],
   });
-  console.log(`✅  Targets: SBTi near-term (2030) + Net Zero (2050)`);
-
-  // ────────────────────────────────────────────────────────────────────────────
-  // INTERVENTIONS — 32 across all 13 sites + company-wide
-  // ────────────────────────────────────────────────────────────────────────────
-
-  // ─── Sheffield Works (5) ──────────────────────────────────────────────────
-  const solar = await db.intervention.create({
-    data: {
-      companyId: meridian.id,
-      siteId: sheffield.id,
-      businessUnitId: buManufacturing.id,
-      name: "Rooftop Solar PV — Sheffield Works",
-      description: "1.2 MWp rooftop PV array across forge building and warehouse roof. Sleeved PPA with zero upfront capex.",
-      category: "Renewable Energy",
-      scopesAffected: "[2]",
-      totalReductionTco2e: 5250,
-      implementationStartYear: 2024,
-      fullBenefitYear: 2025,
-      status: "COMPLETED",
-      owner: "Sarah Chen",
-    },
-  });
-  await db.interventionAnnualReduction.createMany({
-    data: ramp(2024, 2025, 1050).map((r) => ({ interventionId: solar.id, ...r })),
-  });
-
-  const led = await db.intervention.create({
-    data: {
-      companyId: meridian.id,
-      siteId: sheffield.id,
-      businessUnitId: buManufacturing.id,
-      name: "LED Lighting Upgrade — Sheffield Works",
-      description: "Full LED retrofit across forge floor, warehouse aisles, and office block. ESOS audit-identified quick win with 18-month payback.",
-      category: "Energy Efficiency",
-      scopesAffected: "[2]",
-      totalReductionTco2e: 19200,
-      implementationStartYear: 2023,
-      fullBenefitYear: 2024,
-      status: "COMPLETED",
-      owner: "James Whitmore",
-    },
-  });
-  await db.interventionAnnualReduction.createMany({
-    data: ramp(2023, 2024, 1600).map((r) => ({ interventionId: led.id, ...r })),
-  });
-
-  const compAir = await db.intervention.create({
-    data: {
-      companyId: meridian.id,
-      siteId: sheffield.id,
-      businessUnitId: buManufacturing.id,
-      name: "Compressed Air Optimisation — Sheffield Works",
-      description: "Variable speed drives on compressors, leak detection survey, and pressure optimisation. Quick-win project with 18-month payback.",
-      category: "Energy Efficiency",
-      scopesAffected: "[2]",
-      totalReductionTco2e: 1050,
-      implementationStartYear: 2024,
-      fullBenefitYear: 2025,
-      status: "IN_PROGRESS",
-      owner: "James Whitmore",
-    },
-  });
-  await db.interventionAnnualReduction.createMany({
-    data: ramp(2024, 2025, 150).map((r) => ({ interventionId: compAir.id, ...r })),
-  });
-
-  const insulation = await db.intervention.create({
-    data: {
-      companyId: meridian.id,
-      siteId: sheffield.id,
-      businessUnitId: buManufacturing.id,
-      name: "Building Fabric Insulation — Sheffield Works",
-      description: "Roof insulation top-up (300mm mineral wool), cavity wall insulation on the office block, and replacement of single-glazed roof lights.",
-      category: "Energy Efficiency",
-      scopesAffected: "[1,2]",
-      totalReductionTco2e: 3200,
-      implementationStartYear: 2025,
-      fullBenefitYear: 2027,
-      status: "PLANNED",
-      owner: "James Whitmore",
-    },
-  });
-  await db.interventionAnnualReduction.createMany({
-    data: ramp(2025, 2027, 640).map((r) => ({ interventionId: insulation.id, ...r })),
-  });
-
-  const heatPump = await db.intervention.create({
-    data: {
-      companyId: meridian.id,
-      siteId: sheffield.id,
-      businessUnitId: buManufacturing.id,
-      name: "Industrial Heat Pump — Sheffield Works",
-      description: "High-temperature industrial heat pump to replace gas-fired boiler system. Requires IETF grant application.",
-      category: "Process Decarbonisation",
-      scopesAffected: "[1]",
-      totalReductionTco2e: 16800,
-      implementationStartYear: 2026,
-      fullBenefitYear: 2028,
-      status: "PLANNED",
-      owner: "James Whitmore",
-    },
-  });
-  await db.interventionAnnualReduction.createMany({
-    data: ramp(2026, 2028, 4200).map((r) => ({ interventionId: heatPump.id, ...r })),
-  });
-
-  // ─── Manchester Distribution Centre (2) ───────────────────────────────────
-  const manchFleet = await db.intervention.create({
-    data: {
-      companyId: meridian.id,
-      siteId: manchester.id,
-      businessUnitId: buLogistics.id,
-      name: "Fleet Electrification — Manchester DC",
-      description: "Phased replacement of 14 diesel HGVs and 6 light commercial vehicles with battery-electric equivalents. LEVI grant application submitted.",
-      category: "Transport Decarbonisation",
-      scopesAffected: "[1]",
-      totalReductionTco2e: 9000,
-      implementationStartYear: 2026,
-      fullBenefitYear: 2029,
-      status: "PLANNED",
-      owner: "Sarah Chen",
-    },
-  });
-  await db.interventionAnnualReduction.createMany({
-    data: ramp(2026, 2029, 2250).map((r) => ({ interventionId: manchFleet.id, ...r })),
-  });
-
-  const manchBMS = await db.intervention.create({
-    data: {
-      companyId: meridian.id,
-      siteId: manchester.id,
-      businessUnitId: buLogistics.id,
-      name: "Building Management System — Manchester DC",
-      description: "Smart BMS to optimise heating, cooling, and lighting schedules. Integration with weather API and occupancy sensors.",
-      category: "Energy Efficiency",
-      scopesAffected: "[1,2]",
-      totalReductionTco2e: 2520,
-      implementationStartYear: 2025,
-      fullBenefitYear: 2026,
-      status: "PLANNED",
-      owner: "James Whitmore",
-    },
-  });
-  await db.interventionAnnualReduction.createMany({
-    data: ramp(2025, 2026, 420).map((r) => ({ interventionId: manchBMS.id, ...r })),
-  });
-
-  // ─── Bristol Assembly (2) ─────────────────────────────────────────────────
-  const bristolHP = await db.intervention.create({
-    data: {
-      companyId: meridian.id,
-      siteId: bristol.id,
-      businessUnitId: buManufacturing.id,
-      name: "Heat Pump HVAC — Bristol Assembly",
-      description: "Air-source heat pump system to replace ageing gas boilers for space heating and hot water. Sized at 280 kW output.",
-      category: "Process Decarbonisation",
-      scopesAffected: "[1]",
-      totalReductionTco2e: 2900,
-      implementationStartYear: 2027,
-      fullBenefitYear: 2029,
-      status: "PLANNED",
-      owner: "James Whitmore",
-    },
-  });
-  await db.interventionAnnualReduction.createMany({
-    data: ramp(2027, 2029, 870).map((r) => ({ interventionId: bristolHP.id, ...r })),
-  });
-
-  const bristolSolar = await db.intervention.create({
-    data: {
-      companyId: meridian.id,
-      siteId: bristol.id,
-      businessUnitId: buManufacturing.id,
-      name: "Rooftop Solar PV — Bristol Assembly",
-      description: "480 kWp rooftop solar installation on the main assembly hall. Excess generation exported to grid.",
-      category: "Renewable Energy",
-      scopesAffected: "[2]",
-      totalReductionTco2e: 1200,
-      implementationStartYear: 2026,
-      fullBenefitYear: 2027,
-      status: "PLANNED",
-      owner: "Sarah Chen",
-    },
-  });
-  await db.interventionAnnualReduction.createMany({
-    data: ramp(2026, 2027, 240).map((r) => ({ interventionId: bristolSolar.id, ...r })),
-  });
-
-  // ─── Chicago Manufacturing Hub (2) ────────────────────────────────────────
-  const chicagoSolar = await db.intervention.create({
-    data: {
-      companyId: meridian.id,
-      siteId: chicago.id,
-      businessUnitId: buManufacturing.id,
-      name: "Solar PV Array — Chicago Hub",
-      description: "1.0 MWp ground-mounted solar array on adjacent land. ITC tax credit (30%) reduces net cost significantly.",
-      category: "Renewable Energy",
-      scopesAffected: "[2]",
-      totalReductionTco2e: 2600,
-      implementationStartYear: 2026,
-      fullBenefitYear: 2027,
-      status: "PLANNED",
-      owner: "Sarah Chen",
-    },
-  });
-  await db.interventionAnnualReduction.createMany({
-    data: ramp(2026, 2027, 520).map((r) => ({ interventionId: chicagoSolar.id, ...r })),
-  });
-
-  const chicagoCA = await db.intervention.create({
-    data: {
-      companyId: meridian.id,
-      siteId: chicago.id,
-      businessUnitId: buManufacturing.id,
-      name: "Compressed Air Optimisation — Chicago Hub",
-      description: "VSD compressor upgrades, leak survey, and pressure optimisation programme. DOE BestPractices guidelines applied.",
-      category: "Energy Efficiency",
-      scopesAffected: "[2]",
-      totalReductionTco2e: 1440,
-      implementationStartYear: 2025,
-      fullBenefitYear: 2026,
-      status: "PLANNED",
-      owner: "James Whitmore",
-    },
-  });
-  await db.interventionAnnualReduction.createMany({
-    data: ramp(2025, 2026, 180).map((r) => ({ interventionId: chicagoCA.id, ...r })),
-  });
-
-  // ─── Houston Operations Centre (2) ────────────────────────────────────────
-  const houstonLED = await db.intervention.create({
-    data: {
-      companyId: meridian.id,
-      siteId: houston.id,
-      businessUnitId: buManufacturing.id,
-      name: "LED Lighting & Controls — Houston",
-      description: "LED fixture replacement plus occupancy and daylight sensing controls across operations centre. Estimated 62% reduction in lighting energy.",
-      category: "Energy Efficiency",
-      scopesAffected: "[2]",
-      totalReductionTco2e: 2175,
-      implementationStartYear: 2025,
-      fullBenefitYear: 2026,
-      status: "PLANNED",
-      owner: "James Whitmore",
-    },
-  });
-  await db.interventionAnnualReduction.createMany({
-    data: ramp(2025, 2026, 290).map((r) => ({ interventionId: houstonLED.id, ...r })),
-  });
-
-  const houstonBMS = await db.intervention.create({
-    data: {
-      companyId: meridian.id,
-      siteId: houston.id,
-      businessUnitId: buManufacturing.id,
-      name: "Building Management Systems — Houston",
-      description: "Integrated BMS to optimise HVAC, compressed air scheduling, and process heating. Estimated 18% reduction in site energy.",
-      category: "Energy Efficiency",
-      scopesAffected: "[1,2]",
-      totalReductionTco2e: 2100,
-      implementationStartYear: 2026,
-      fullBenefitYear: 2027,
-      status: "PLANNED",
-      owner: "James Whitmore",
-    },
-  });
-  await db.interventionAnnualReduction.createMany({
-    data: ramp(2026, 2027, 350).map((r) => ({ interventionId: houstonBMS.id, ...r })),
-  });
-
-  // ─── Los Angeles Facility (2) ─────────────────────────────────────────────
-  const laFleet = await db.intervention.create({
-    data: {
-      companyId: meridian.id,
-      siteId: losAngeles.id,
-      businessUnitId: buLogistics.id,
-      name: "Fleet Electrification — Los Angeles",
-      description: "Replacement of 8 diesel delivery vehicles with battery-electric alternatives. CARB ZEV mandate accelerates timeline.",
-      category: "Transport Decarbonisation",
-      scopesAffected: "[1]",
-      totalReductionTco2e: 4340,
-      implementationStartYear: 2025,
-      fullBenefitYear: 2027,
-      status: "PLANNED",
-      owner: "Sarah Chen",
-    },
-  });
-  await db.interventionAnnualReduction.createMany({
-    data: ramp(2025, 2027, 1240).map((r) => ({ interventionId: laFleet.id, ...r })),
-  });
-
-  const laSolar = await db.intervention.create({
-    data: {
-      companyId: meridian.id,
-      siteId: losAngeles.id,
-      businessUnitId: buLogistics.id,
-      name: "Rooftop Solar PV — Los Angeles",
-      description: "750 kWp rooftop PV system. High irradiance location gives excellent yield. ITC 30% tax credit applied.",
-      category: "Renewable Energy",
-      scopesAffected: "[2]",
-      totalReductionTco2e: 1900,
-      implementationStartYear: 2025,
-      fullBenefitYear: 2026,
-      status: "PLANNED",
-      owner: "Sarah Chen",
-    },
-  });
-  await db.interventionAnnualReduction.createMany({
-    data: ramp(2025, 2026, 380).map((r) => ({ interventionId: laSolar.id, ...r })),
-  });
-
-  // ─── Seattle Tech Centre (2) ──────────────────────────────────────────────
-  const seattleHP = await db.intervention.create({
-    data: {
-      companyId: meridian.id,
-      siteId: seattle.id,
-      businessUnitId: buCorporate.id,
-      name: "Heat Pumps — Seattle Tech Centre",
-      description: "Air-source heat pump system to decarbonise space heating in office and lab areas. Mild Seattle climate gives excellent COP.",
-      category: "Process Decarbonisation",
-      scopesAffected: "[1]",
-      totalReductionTco2e: 1360,
-      implementationStartYear: 2026,
-      fullBenefitYear: 2028,
-      status: "PLANNED",
-      owner: "James Whitmore",
-    },
-  });
-  await db.interventionAnnualReduction.createMany({
-    data: ramp(2026, 2028, 340).map((r) => ({ interventionId: seattleHP.id, ...r })),
-  });
-
-  const seattleIns = await db.intervention.create({
-    data: {
-      companyId: meridian.id,
-      siteId: seattle.id,
-      businessUnitId: buCorporate.id,
-      name: "Building Fabric Insulation — Seattle Centre",
-      description: "External wall insulation, roof upgrade, and high-performance glazing. Works complement heat pump installation.",
-      category: "Energy Efficiency",
-      scopesAffected: "[1,2]",
-      totalReductionTco2e: 1140,
-      implementationStartYear: 2027,
-      fullBenefitYear: 2029,
-      status: "PLANNED",
-      owner: "James Whitmore",
-    },
-  });
-  await db.interventionAnnualReduction.createMany({
-    data: ramp(2027, 2029, 190).map((r) => ({ interventionId: seattleIns.id, ...r })),
-  });
-
-  // ─── Atlanta Distribution (2) ─────────────────────────────────────────────
-  const atlantaSolar = await db.intervention.create({
-    data: {
-      companyId: meridian.id,
-      siteId: atlanta.id,
-      businessUnitId: buLogistics.id,
-      name: "Solar PV — Atlanta Distribution",
-      description: "800 kWp rooftop and canopy solar at the Atlanta distribution centre. High solar irradiance in Georgia gives strong yield.",
-      category: "Renewable Energy",
-      scopesAffected: "[2]",
-      totalReductionTco2e: 2050,
-      implementationStartYear: 2026,
-      fullBenefitYear: 2027,
-      status: "PLANNED",
-      owner: "Sarah Chen",
-    },
-  });
-  await db.interventionAnnualReduction.createMany({
-    data: ramp(2026, 2027, 410).map((r) => ({ interventionId: atlantaSolar.id, ...r })),
-  });
-
-  const atlantaLED = await db.intervention.create({
-    data: {
-      companyId: meridian.id,
-      siteId: atlanta.id,
-      businessUnitId: buLogistics.id,
-      name: "LED Lighting — Atlanta Distribution",
-      description: "High-bay LED fixtures replacing metal halide fittings in the 120,000 sq ft warehouse. Motion sensing reduces hours further.",
-      category: "Energy Efficiency",
-      scopesAffected: "[2]",
-      totalReductionTco2e: 1275,
-      implementationStartYear: 2025,
-      fullBenefitYear: 2026,
-      status: "PLANNED",
-      owner: "James Whitmore",
-    },
-  });
-  await db.interventionAnnualReduction.createMany({
-    data: ramp(2025, 2026, 170).map((r) => ({ interventionId: atlantaLED.id, ...r })),
-  });
-
-  // ─── Denver Regional Office (2) ───────────────────────────────────────────
-  const denverSolar = await db.intervention.create({
-    data: {
-      companyId: meridian.id,
-      siteId: denver.id,
-      businessUnitId: buCorporate.id,
-      name: "Rooftop Solar — Denver Office",
-      description: "500 kWp solar array on office building roof. Denver's high altitude and 300 annual sunny days deliver excellent performance.",
-      category: "Renewable Energy",
-      scopesAffected: "[2]",
-      totalReductionTco2e: 1300,
-      implementationStartYear: 2026,
-      fullBenefitYear: 2027,
-      status: "PLANNED",
-      owner: "Sarah Chen",
-    },
-  });
-  await db.interventionAnnualReduction.createMany({
-    data: ramp(2026, 2027, 260).map((r) => ({ interventionId: denverSolar.id, ...r })),
-  });
-
-  const denverFleet = await db.intervention.create({
-    data: {
-      companyId: meridian.id,
-      siteId: denver.id,
-      businessUnitId: buCorporate.id,
-      name: "Fleet Electrification — Denver",
-      description: "Replacement of 12-vehicle company car and light commercial fleet with EVs. CVRP incentives available in Colorado.",
-      category: "Transport Decarbonisation",
-      scopesAffected: "[1]",
-      totalReductionTco2e: 2100,
-      implementationStartYear: 2025,
-      fullBenefitYear: 2027,
-      status: "PLANNED",
-      owner: "Sarah Chen",
-    },
-  });
-  await db.interventionAnnualReduction.createMany({
-    data: ramp(2025, 2027, 560).map((r) => ({ interventionId: denverFleet.id, ...r })),
-  });
-
-  // ─── Toronto Assembly Plant (2) ───────────────────────────────────────────
-  const torontoFleet = await db.intervention.create({
-    data: {
-      companyId: meridian.id,
-      siteId: toronto.id,
-      businessUnitId: buManufacturing.id,
-      name: "Fleet Electrification — Toronto Plant",
-      description: "Full electrification of 18-vehicle delivery and yard management fleet. iZEV incentive covers up to CAD 5,000 per vehicle.",
-      category: "Transport Decarbonisation",
-      scopesAffected: "[1]",
-      totalReductionTco2e: 5920,
-      implementationStartYear: 2026,
-      fullBenefitYear: 2029,
-      status: "PLANNED",
-      owner: "Sarah Chen",
-    },
-  });
-  await db.interventionAnnualReduction.createMany({
-    data: ramp(2026, 2029, 2220).map((r) => ({ interventionId: torontoFleet.id, ...r })),
-  });
-
-  const torontoIns = await db.intervention.create({
-    data: {
-      companyId: meridian.id,
-      siteId: toronto.id,
-      businessUnitId: buManufacturing.id,
-      name: "Building Insulation — Toronto Plant",
-      description: "Roof, wall, and floor insulation upgrade to meet ASHRAE 90.1-2019 standard. Cold climate makes heating savings significant.",
-      category: "Energy Efficiency",
-      scopesAffected: "[1,2]",
-      totalReductionTco2e: 1860,
-      implementationStartYear: 2025,
-      fullBenefitYear: 2027,
-      status: "PLANNED",
-      owner: "James Whitmore",
-    },
-  });
-  await db.interventionAnnualReduction.createMany({
-    data: ramp(2025, 2027, 620).map((r) => ({ interventionId: torontoIns.id, ...r })),
-  });
-
-  // ─── Vancouver Logistics (2) ──────────────────────────────────────────────
-  const vanHP = await db.intervention.create({
-    data: {
-      companyId: meridian.id,
-      siteId: vancouver.id,
-      businessUnitId: buLogistics.id,
-      name: "Heat Pumps — Vancouver Logistics",
-      description: "Ground-source heat pump system utilising the mild Pacific Northwest climate. BC Hydro CleanBC incentive covers 25% of capex.",
-      category: "Process Decarbonisation",
-      scopesAffected: "[1]",
-      totalReductionTco2e: 1740,
-      implementationStartYear: 2025,
-      fullBenefitYear: 2027,
-      status: "PLANNED",
-      owner: "James Whitmore",
-    },
-  });
-  await db.interventionAnnualReduction.createMany({
-    data: ramp(2025, 2027, 580).map((r) => ({ interventionId: vanHP.id, ...r })),
-  });
-
-  const vanPPA = await db.intervention.create({
-    data: {
-      companyId: meridian.id,
-      siteId: vancouver.id,
-      businessUnitId: buCorporate.id,
-      name: "Corporate PPA — North America",
-      description: "Virtual PPA for 8 GWh/yr of Canadian hydropower certificates covering all Canadian and US sites. 10-year term.",
-      category: "Renewable Energy",
-      scopesAffected: "[2]",
-      totalReductionTco2e: 4800,
-      implementationStartYear: 2025,
-      fullBenefitYear: 2026,
-      status: "PLANNED",
-      owner: "Sarah Chen",
-    },
-  });
-  await db.interventionAnnualReduction.createMany({
-    data: ramp(2025, 2026, 480).map((r) => ({ interventionId: vanPPA.id, ...r })),
-  });
-
-  // ─── Calgary Processing Facility (2) ──────────────────────────────────────
-  const calgarySolar = await db.intervention.create({
-    data: {
-      companyId: meridian.id,
-      siteId: calgary.id,
-      businessUnitId: buManufacturing.id,
-      name: "Solar PV — Calgary Processing",
-      description: "400 kWp rooftop PV system. Alberta's deregulated electricity market allows direct export of surplus generation.",
-      category: "Renewable Energy",
-      scopesAffected: "[2]",
-      totalReductionTco2e: 950,
-      implementationStartYear: 2027,
-      fullBenefitYear: 2028,
-      status: "PLANNED",
-      owner: "Sarah Chen",
-    },
-  });
-  await db.interventionAnnualReduction.createMany({
-    data: ramp(2027, 2028, 190).map((r) => ({ interventionId: calgarySolar.id, ...r })),
-  });
-
-  const calgaryLED = await db.intervention.create({
-    data: {
-      companyId: meridian.id,
-      siteId: calgary.id,
-      businessUnitId: buManufacturing.id,
-      name: "LED Lighting — Calgary Processing",
-      description: "LED retrofit across processing facility. Long operating hours (16hr/day) and cold-climate ballast inefficiencies make this a strong ROI project.",
-      category: "Energy Efficiency",
-      scopesAffected: "[2]",
-      totalReductionTco2e: 1050,
-      implementationStartYear: 2025,
-      fullBenefitYear: 2026,
-      status: "PLANNED",
-      owner: "James Whitmore",
-    },
-  });
-  await db.interventionAnnualReduction.createMany({
-    data: ramp(2025, 2026, 210).map((r) => ({ interventionId: calgaryLED.id, ...r })),
-  });
-
-  // ─── Warsaw European Hub (2) ──────────────────────────────────────────────
-  const warsawIns = await db.intervention.create({
-    data: {
-      companyId: meridian.id,
-      siteId: warsaw.id,
-      businessUnitId: buManufacturing.id,
-      name: "Building Insulation — Warsaw Hub",
-      description: "Comprehensive thermal envelope upgrade: external insulation (200mm EPS), roof insulation, and triple-glazed windows. High grid factor makes electricity savings impactful.",
-      category: "Energy Efficiency",
-      scopesAffected: "[1,2]",
-      totalReductionTco2e: 3520,
-      implementationStartYear: 2025,
-      fullBenefitYear: 2027,
-      status: "PLANNED",
-      owner: "James Whitmore",
-    },
-  });
-  await db.interventionAnnualReduction.createMany({
-    data: ramp(2025, 2027, 880).map((r) => ({ interventionId: warsawIns.id, ...r })),
-  });
-
-  const warsawLED = await db.intervention.create({
-    data: {
-      companyId: meridian.id,
-      siteId: warsaw.id,
-      businessUnitId: buManufacturing.id,
-      name: "LED Lighting & Controls — Warsaw Hub",
-      description: "Full LED retrofit with DALI control system and daylight dimming. Poland's high grid emission factor (0.773 kgCO2e/kWh) makes lighting savings particularly impactful.",
-      category: "Energy Efficiency",
-      scopesAffected: "[2]",
-      totalReductionTco2e: 2850,
-      implementationStartYear: 2025,
-      fullBenefitYear: 2026,
-      status: "PLANNED",
-      owner: "James Whitmore",
-    },
-  });
-  await db.interventionAnnualReduction.createMany({
-    data: ramp(2025, 2026, 380).map((r) => ({ interventionId: warsawLED.id, ...r })),
-  });
-
-  // ─── Company-wide (3) ─────────────────────────────────────────────────────
-  const ppa = await db.intervention.create({
-    data: {
-      companyId: meridian.id,
-      siteId: null,
-      businessUnitId: buCorporate.id,
-      name: "Corporate Renewable PPA — UK Sites",
-      description: "10-year sleeved PPA with Vattenfall for 5 GWh/yr of UK offshore wind. Eliminates remaining market-based Scope 2 across UK sites.",
-      category: "Renewable Energy",
-      scopesAffected: "[2]",
-      totalReductionTco2e: 15200,
-      implementationStartYear: 2025,
-      fullBenefitYear: 2026,
-      status: "PLANNED",
-      owner: "Sarah Chen",
-    },
-  });
-  await db.interventionAnnualReduction.createMany({
-    data: ramp(2025, 2026, 1900).map((r) => ({ interventionId: ppa.id, ...r })),
-  });
-
-  const supplyChain = await db.intervention.create({
-    data: {
-      companyId: meridian.id,
-      siteId: null,
-      businessUnitId: buCorporate.id,
-      name: "Supply Chain Decarbonisation Programme",
-      description: "Engagement with top-20 suppliers representing 70% of Scope 3 Category 1. Includes supplier scorecards, joint reduction targets, and annual reporting.",
-      category: "Supply Chain",
-      scopesAffected: "[3]",
-      totalReductionTco2e: 12600,
-      implementationStartYear: 2026,
-      fullBenefitYear: 2030,
-      status: "PLANNED",
-      owner: "Sarah Chen",
-    },
-  });
-  await db.interventionAnnualReduction.createMany({
-    data: ramp(2026, 2030, 3150).map((r) => ({ interventionId: supplyChain.id, ...r })),
-  });
-
-  const ukEV = await db.intervention.create({
-    data: {
-      companyId: meridian.id,
-      siteId: null,
-      businessUnitId: buCorporate.id,
-      name: "EV Charging Network — UK Sites",
-      description: "Installation of 60 AC and 6 DC rapid chargers across Sheffield, Manchester, and Bristol sites. Supports fleet transition and employee EV adoption.",
-      category: "Transport Decarbonisation",
-      scopesAffected: "[1,2]",
-      totalReductionTco2e: 2880,
-      implementationStartYear: 2026,
-      fullBenefitYear: 2028,
-      status: "PLANNED",
-      owner: "James Whitmore",
-    },
-  });
-  await db.interventionAnnualReduction.createMany({
-    data: ramp(2026, 2028, 720).map((r) => ({ interventionId: ukEV.id, ...r })),
-  });
-
-  console.log(`✅  Interventions (32) + annual reductions through 2050`);
+  console.log(`✅  Targets: SBTi near-term (2030) + Interim (2035) + Net Zero (2050)`);
 
   // ──────────────────────────────────────────────────────────────────────────
-  // SCENARIOS
+  // INTERVENTIONS — 15 (site-specific + company-wide)
+  // ──────────────────────────────────────────────────────────────────────────
+
+  // 1. Rooftop Solar PV — Sheffield Works (COMPLETED)
+  const solarSheffield = await db.intervention.create({
+    data: {
+      companyId: meridian.id, siteId: sheffield.id, businessUnitId: buManufacturing.id,
+      name: "Rooftop Solar PV — Sheffield Works",
+      description: "1.2 MWp rooftop PV array across forge building and warehouse roof. Sleeved PPA with zero upfront capex. Generating since Q2 2024.",
+      category: "Renewable Energy", scopesAffected: "[2]",
+      totalReductionTco2e: 19900,
+      implementationStartYear: 2024, fullBenefitYear: 2025,
+      status: "COMPLETED", owner: "Sarah Chen",
+    },
+  });
+  await db.interventionAnnualReduction.createMany({
+    data: ramp(2024, 2025, 750).map((r) => ({ interventionId: solarSheffield.id, ...r })),
+  });
+
+  // 2. LED Lighting Upgrade — Sheffield Works (COMPLETED)
+  const ledSheffield = await db.intervention.create({
+    data: {
+      companyId: meridian.id, siteId: sheffield.id, businessUnitId: buManufacturing.id,
+      name: "LED Lighting Upgrade — Sheffield Works",
+      description: "Full LED retrofit across forge floor, warehouse aisles, and office block. ESOS audit-identified quick win with 14-month payback.",
+      category: "Energy Efficiency", scopesAffected: "[2]",
+      totalReductionTco2e: 13200,
+      implementationStartYear: 2023, fullBenefitYear: 2024,
+      status: "COMPLETED", owner: "James Whitmore",
+    },
+  });
+  await db.interventionAnnualReduction.createMany({
+    data: ramp(2023, 2024, 480).map((r) => ({ interventionId: ledSheffield.id, ...r })),
+  });
+
+  // 3. Industrial Heat Pump — Sheffield Works (IN_PROGRESS)
+  const heatPumpSheffield = await db.intervention.create({
+    data: {
+      companyId: meridian.id, siteId: sheffield.id, businessUnitId: buManufacturing.id,
+      name: "Industrial Heat Pump — Sheffield Works",
+      description: "High-temperature industrial heat pump (2.5 MW thermal) to replace gas-fired boiler system. IETF Phase 2 grant awarded. Installation commenced Q4 2024.",
+      category: "Process Decarbonisation", scopesAffected: "[1]",
+      totalReductionTco2e: 70000,
+      implementationStartYear: 2025, fullBenefitYear: 2027,
+      status: "IN_PROGRESS", owner: "James Whitmore",
+    },
+  });
+  await db.interventionAnnualReduction.createMany({
+    data: ramp(2025, 2027, 2800).map((r) => ({ interventionId: heatPumpSheffield.id, ...r })),
+  });
+
+  // 4. Fleet Electrification Programme (Manchester-based, company-wide)
+  const fleetElec = await db.intervention.create({
+    data: {
+      companyId: meridian.id, siteId: manchester.id, businessUnitId: buLogistics.id,
+      name: "Fleet Electrification Programme",
+      description: "Phased replacement of 22 diesel HGVs and 14 light commercial vehicles across Manchester, Los Angeles, and Toronto with battery-electric equivalents. LEVI and CARB incentives applied.",
+      category: "Transport Decarbonisation", scopesAffected: "[1]",
+      totalReductionTco2e: 75200,
+      implementationStartYear: 2026, fullBenefitYear: 2029,
+      status: "PLANNED", owner: "Sarah Chen",
+    },
+  });
+  await db.interventionAnnualReduction.createMany({
+    data: ramp(2026, 2029, 3200).map((r) => ({ interventionId: fleetElec.id, ...r })),
+  });
+
+  // 5. Multi-site Building Insulation Programme
+  const insulationMulti = await db.intervention.create({
+    data: {
+      companyId: meridian.id, siteId: null, businessUnitId: buCorporate.id,
+      name: "Multi-site Building Insulation Programme",
+      description: "Coordinated thermal envelope upgrades across Sheffield, Toronto, Calgary, and Warsaw. Roof insulation (300mm mineral wool), cavity wall insulation, and replacement of single-glazed roof lights.",
+      category: "Energy Efficiency", scopesAffected: "[1,2]",
+      totalReductionTco2e: 38400,
+      implementationStartYear: 2026, fullBenefitYear: 2028,
+      status: "PLANNED", owner: "James Whitmore",
+    },
+  });
+  await db.interventionAnnualReduction.createMany({
+    data: ramp(2026, 2028, 1600).map((r) => ({ interventionId: insulationMulti.id, ...r })),
+  });
+
+  // 6. Rooftop Solar PV — Bristol Assembly
+  const solarBristol = await db.intervention.create({
+    data: {
+      companyId: meridian.id, siteId: bristol.id, businessUnitId: buManufacturing.id,
+      name: "Rooftop Solar PV — Bristol Assembly",
+      description: "480 kWp rooftop solar installation on the main assembly hall. Excess generation exported to grid under SEG tariff.",
+      category: "Renewable Energy", scopesAffected: "[2]",
+      totalReductionTco2e: 10300,
+      implementationStartYear: 2026, fullBenefitYear: 2027,
+      status: "PLANNED", owner: "Sarah Chen",
+    },
+  });
+  await db.interventionAnnualReduction.createMany({
+    data: ramp(2026, 2027, 420).map((r) => ({ interventionId: solarBristol.id, ...r })),
+  });
+
+  // 7. Solar PV Array — Chicago Hub
+  const solarChicago = await db.intervention.create({
+    data: {
+      companyId: meridian.id, siteId: chicago.id, businessUnitId: buManufacturing.id,
+      name: "Solar PV Array — Chicago Hub",
+      description: "1.0 MWp ground-mounted solar array on adjacent land. ITC tax credit (30%) reduces net cost significantly. ComEd net metering agreement in place.",
+      category: "Renewable Energy", scopesAffected: "[2]",
+      totalReductionTco2e: 16700,
+      implementationStartYear: 2026, fullBenefitYear: 2027,
+      status: "PLANNED", owner: "Sarah Chen",
+    },
+  });
+  await db.interventionAnnualReduction.createMany({
+    data: ramp(2026, 2027, 680).map((r) => ({ interventionId: solarChicago.id, ...r })),
+  });
+
+  // 8. BMS Rollout — Warehouses
+  const bmsRollout = await db.intervention.create({
+    data: {
+      companyId: meridian.id, siteId: null, businessUnitId: buLogistics.id,
+      name: "BMS Rollout — Warehouses",
+      description: "Smart building management systems at Manchester, Atlanta, Vancouver, and Los Angeles. Weather API integration, occupancy sensors, and automated HVAC scheduling.",
+      category: "Energy Efficiency", scopesAffected: "[1,2]",
+      totalReductionTco2e: 28100,
+      implementationStartYear: 2025, fullBenefitYear: 2026,
+      status: "PLANNED", owner: "James Whitmore",
+    },
+  });
+  await db.interventionAnnualReduction.createMany({
+    data: ramp(2025, 2026, 1100).map((r) => ({ interventionId: bmsRollout.id, ...r })),
+  });
+
+  // 9. Heat Pump HVAC — Toronto Plant
+  const heatPumpToronto = await db.intervention.create({
+    data: {
+      companyId: meridian.id, siteId: toronto.id, businessUnitId: buManufacturing.id,
+      name: "Heat Pump HVAC — Toronto Plant",
+      description: "Industrial air-source heat pump system (1.2 MW thermal) to replace ageing gas boiler. Canada Greener Homes Grant and Ontario IESO SaveOnEnergy incentive applied.",
+      category: "Process Decarbonisation", scopesAffected: "[1]",
+      totalReductionTco2e: 43700,
+      implementationStartYear: 2027, fullBenefitYear: 2029,
+      status: "PLANNED", owner: "James Whitmore",
+    },
+  });
+  await db.interventionAnnualReduction.createMany({
+    data: ramp(2027, 2029, 1900).map((r) => ({ interventionId: heatPumpToronto.id, ...r })),
+  });
+
+  // 10. Corporate Renewable PPA — UK Sites
+  const ppaUK = await db.intervention.create({
+    data: {
+      companyId: meridian.id, siteId: null, businessUnitId: buCorporate.id,
+      name: "Corporate Renewable PPA — UK Sites",
+      description: "10-year sleeved PPA with Vattenfall for 8 GWh/yr of UK offshore wind. Eliminates remaining market-based Scope 2 across Sheffield, Manchester, Bristol, and Birmingham.",
+      category: "Renewable Energy", scopesAffected: "[2]",
+      totalReductionTco2e: 86700,
+      implementationStartYear: 2025, fullBenefitYear: 2026,
+      status: "PLANNED", owner: "Sarah Chen",
+    },
+  });
+  await db.interventionAnnualReduction.createMany({
+    data: ramp(2025, 2026, 3400).map((r) => ({ interventionId: ppaUK.id, ...r })),
+  });
+
+  // 11. Corporate PPA — North America
+  const ppaNorthAm = await db.intervention.create({
+    data: {
+      companyId: meridian.id, siteId: null, businessUnitId: buCorporate.id,
+      name: "Corporate PPA — North America",
+      description: "Virtual PPA for 10 GWh/yr of Canadian hydropower and US wind certificates covering all North American sites. 10-year term with price escalator.",
+      category: "Renewable Energy", scopesAffected: "[2]",
+      totalReductionTco2e: 68600,
+      implementationStartYear: 2026, fullBenefitYear: 2027,
+      status: "PLANNED", owner: "Sarah Chen",
+    },
+  });
+  await db.interventionAnnualReduction.createMany({
+    data: ramp(2026, 2027, 2800).map((r) => ({ interventionId: ppaNorthAm.id, ...r })),
+  });
+
+  // 12. Supply Chain Decarbonisation Programme
+  const supplyChain = await db.intervention.create({
+    data: {
+      companyId: meridian.id, siteId: null, businessUnitId: buCorporate.id,
+      name: "Supply Chain Decarbonisation Programme",
+      description: "Engagement with top-25 suppliers representing 72% of Scope 3 Category 1. Includes supplier scorecards, joint reduction targets, transition finance facility, and annual CDP reporting.",
+      category: "Supply Chain", scopesAffected: "[3]",
+      totalReductionTco2e: 128800,
+      implementationStartYear: 2026, fullBenefitYear: 2030,
+      status: "PLANNED", owner: "Sarah Chen",
+    },
+  });
+  await db.interventionAnnualReduction.createMany({
+    data: ramp(2026, 2030, 5600).map((r) => ({ interventionId: supplyChain.id, ...r })),
+  });
+
+  // 13. EV Charging Network — UK Sites
+  const evCharging = await db.intervention.create({
+    data: {
+      companyId: meridian.id, siteId: null, businessUnitId: buCorporate.id,
+      name: "EV Charging Network — UK Sites",
+      description: "Installation of 80 AC (22 kW) and 8 DC rapid (150 kW) chargers across Sheffield, Manchester, Bristol, and Birmingham. Supports fleet transition and employee EV adoption.",
+      category: "Transport Decarbonisation", scopesAffected: "[1,2]",
+      totalReductionTco2e: 22800,
+      implementationStartYear: 2026, fullBenefitYear: 2028,
+      status: "PLANNED", owner: "James Whitmore",
+    },
+  });
+  await db.interventionAnnualReduction.createMany({
+    data: ramp(2026, 2028, 950).map((r) => ({ interventionId: evCharging.id, ...r })),
+  });
+
+  // 14. Refrigerant Transition Programme
+  const refrigerant = await db.intervention.create({
+    data: {
+      companyId: meridian.id, siteId: null, businessUnitId: buCorporate.id,
+      name: "Refrigerant Transition Programme",
+      description: "Phase-out of R22 and R410A refrigerants across all cold stores and HVAC systems. Replacement with low-GWP alternatives (R290, R1234ze). F-Gas regulation compliance.",
+      category: "Process Decarbonisation", scopesAffected: "[1]",
+      totalReductionTco2e: 37500,
+      implementationStartYear: 2025, fullBenefitYear: 2027,
+      status: "PLANNED", owner: "James Whitmore",
+    },
+  });
+  await db.interventionAnnualReduction.createMany({
+    data: ramp(2025, 2027, 1500).map((r) => ({ interventionId: refrigerant.id, ...r })),
+  });
+
+  // 15. Warsaw Thermal Envelope + LED Upgrade
+  const warsawThermal = await db.intervention.create({
+    data: {
+      companyId: meridian.id, siteId: warsaw.id, businessUnitId: buManufacturing.id,
+      name: "Warsaw Thermal Envelope + LED Upgrade",
+      description: "Comprehensive package: external insulation (200mm EPS), triple-glazed windows, roof insulation, and full LED retrofit with DALI controls. Poland's high grid factor (0.773 kgCO₂e/kWh) makes savings especially impactful. EU Cohesion Fund grant covers 35%.",
+      category: "Energy Efficiency", scopesAffected: "[1,2]",
+      totalReductionTco2e: 45000,
+      implementationStartYear: 2025, fullBenefitYear: 2027,
+      status: "PLANNED", owner: "James Whitmore",
+    },
+  });
+  await db.interventionAnnualReduction.createMany({
+    data: ramp(2025, 2027, 1800).map((r) => ({ interventionId: warsawThermal.id, ...r })),
+  });
+
+  console.log(`✅  Interventions (15) + annual reductions through 2050`);
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // SCENARIOS — 3 (Ambitious 2040 / Moderate 2045 / Conservative 2050)
   // ──────────────────────────────────────────────────────────────────────────
 
   const scenarioAmbitious = await db.scenario.create({
     data: {
       companyId: meridian.id,
       name: "Ambitious — Net Zero by 2040",
-      description: "All major capital projects front-loaded. Higher capex 2025–2030 targets Scope 1+2 elimination by 2035 with supply chain programme delivering net zero by 2040. Assumes grant funding for heat pumps and 100% EV fleets by 2029.",
+      description: "All major capital projects front-loaded. Higher capex 2025-2030 targets Scope 1+2 elimination by 2035 with supply chain programme delivering net zero by 2040. Assumes grant funding for heat pumps and 100% EV fleets by 2029.",
     },
   });
-
+  const scenarioModerate = await db.scenario.create({
+    data: {
+      companyId: meridian.id,
+      name: "Moderate — Net Zero by 2045",
+      description: "Balanced approach with steady capital deployment. Capital-intensive projects deferred 1-2 years to align with natural asset replacement cycles. Moderate execution assumptions on fleet and supply chain reflecting realistic engagement timelines.",
+    },
+  });
   const scenarioConservative = await db.scenario.create({
     data: {
       companyId: meridian.id,
       name: "Conservative — Net Zero by 2050",
-      description: "Phased approach to manage technology risk and capital constraints. Capital-intensive projects deferred 3–4 years. Lower execution % on fleet and supply chain reflecting market and engagement risks.",
+      description: "Risk-averse phased approach to manage technology risk and capital constraints. Capital-intensive projects deferred 3-4 years. Lower execution % on fleet and supply chain reflecting market and engagement risks. No grant funding assumed.",
     },
   });
 
-  // ── Ambitious ScenarioInterventions ───────────────────────────────────────
+  // ── Ambitious ScenarioInterventions ─────────────────────────────────────
   await db.scenarioIntervention.createMany({
     data: [
-      // Sheffield Works
       {
-        scenarioId: scenarioAmbitious.id, interventionId: solar.id,
+        scenarioId: scenarioAmbitious.id, interventionId: solarSheffield.id,
         startYear: 2024, endYear: 2049, executionPct: 100,
         capex: 0, opex: 18000, financialLifetime: 20, technicalAssetLife: 25,
-        notes: "Sleeved PPA — zero upfront capex. O&M included in opex.",
+        notes: "Sleeved PPA — zero upfront capex. O&M included in annual opex.",
       },
       {
-        scenarioId: scenarioAmbitious.id, interventionId: led.id,
+        scenarioId: scenarioAmbitious.id, interventionId: ledSheffield.id,
         startYear: 2023, endYear: 2038, executionPct: 100,
-        capex: 285000, opex: 5000, externalFunding: 900000, financialLifetime: 10, technicalAssetLife: 15,
-        notes: "Already completed. Energy savings NPV factored in as external funding.",
+        capex: 285000, opex: 5000, externalFunding: 940000, financialLifetime: 10, technicalAssetLife: 15,
+        notes: "Completed. Energy savings NPV factored as external funding.",
       },
       {
-        scenarioId: scenarioAmbitious.id, interventionId: compAir.id,
-        startYear: 2024, endYear: 2039, executionPct: 100,
-        capex: 128000, opex: 8000, externalFunding: 480000, financialLifetime: 8, technicalAssetLife: 15,
-        notes: "In progress. Savings NPV over 8yr factored in.",
-      },
-      {
-        scenarioId: scenarioAmbitious.id, interventionId: insulation.id,
-        startYear: 2025, endYear: 2055, executionPct: 100,
-        capex: 420000, opex: 5000, externalFunding: 600000, financialLifetime: 25, technicalAssetLife: 30,
-        notes: "Phase 1: roof 2025. Phase 2: walls and glazing 2026. Heating savings NPV factored in.",
-      },
-      {
-        scenarioId: scenarioAmbitious.id, interventionId: heatPump.id,
-        startYear: 2026, endYear: 2046, executionPct: 100, startQuarter: 2,
+        scenarioId: scenarioAmbitious.id, interventionId: heatPumpSheffield.id,
+        startYear: 2025, endYear: 2045, executionPct: 100, startQuarter: 1,
         capex: 3800000, opex: 95000, externalFunding: 760000, financialLifetime: 20, technicalAssetLife: 20,
         personnelTimeDays: 120, personnelRatePerDay: 750,
-        notes: "IETF grant (20% of capex) assumed. Feasibility study complete.",
+        notes: "IETF Phase 2 grant (20% of capex) awarded. Installation underway.",
       },
-      // Manchester
       {
-        scenarioId: scenarioAmbitious.id, interventionId: manchFleet.id,
+        scenarioId: scenarioAmbitious.id, interventionId: fleetElec.id,
         startYear: 2026, endYear: 2036, executionPct: 100, implementationPacePctPerYear: 25,
-        capex: 1200000, opex: 32000, externalFunding: 220000, financialLifetime: 7, technicalAssetLife: 10,
-        personnelTimeDays: 30, personnelRatePerDay: 600,
-        notes: "LEVI grant application submitted. Charging infrastructure funded separately.",
+        capex: 2400000, opex: 65000, externalFunding: 420000, financialLifetime: 7, technicalAssetLife: 10,
+        personnelTimeDays: 60, personnelRatePerDay: 600,
+        notes: "LEVI + CARB HVIP + iZEV incentives. Charging infrastructure funded via EV Charging intervention.",
       },
       {
-        scenarioId: scenarioAmbitious.id, interventionId: manchBMS.id,
-        startYear: 2025, endYear: 2037, executionPct: 100,
-        capex: 95000, opex: 4000, externalFunding: 320000, financialLifetime: 12, technicalAssetLife: 12,
-        notes: "Energy savings NPV over 12yr exceeds installation cost.",
-      },
-      // Bristol
-      {
-        scenarioId: scenarioAmbitious.id, interventionId: bristolHP.id,
-        startYear: 2027, endYear: 2047, executionPct: 100,
-        capex: 680000, opex: 18000, financialLifetime: 20, technicalAssetLife: 20,
-        notes: "Feasibility completed 2024. Planning permission submitted Q1 2025.",
+        scenarioId: scenarioAmbitious.id, interventionId: insulationMulti.id,
+        startYear: 2026, endYear: 2056, executionPct: 100,
+        capex: 1200000, opex: 15000, externalFunding: 480000, financialLifetime: 25, technicalAssetLife: 30,
+        personnelTimeDays: 80, personnelRatePerDay: 650,
+        notes: "Phased across 4 sites. Sheffield first (Q1 2026), Warsaw last (Q4 2027).",
       },
       {
-        scenarioId: scenarioAmbitious.id, interventionId: bristolSolar.id,
+        scenarioId: scenarioAmbitious.id, interventionId: solarBristol.id,
         startYear: 2026, endYear: 2051, executionPct: 100,
         capex: 150000, opex: 4000, financialLifetime: 25, technicalAssetLife: 25,
+        notes: "Planning permission obtained. Installation scheduled Q2 2026.",
       },
-      // Chicago
       {
-        scenarioId: scenarioAmbitious.id, interventionId: chicagoSolar.id,
+        scenarioId: scenarioAmbitious.id, interventionId: solarChicago.id,
         startYear: 2026, endYear: 2051, executionPct: 100,
         capex: 280000, opex: 9000, financialLifetime: 25, technicalAssetLife: 25,
-        notes: "ITC 30% tax credit reduces net capex to $196k.",
+        notes: "ITC 30% tax credit reduces net capex to $196k. ComEd net metering.",
       },
       {
-        scenarioId: scenarioAmbitious.id, interventionId: chicagoCA.id,
-        startYear: 2025, endYear: 2040, executionPct: 100,
-        capex: 95000, opex: 5000, externalFunding: 360000, financialLifetime: 8, technicalAssetLife: 15,
-        notes: "DOE BestPractices assessment identified $40k annual savings.",
-      },
-      // Houston
-      {
-        scenarioId: scenarioAmbitious.id, interventionId: houstonLED.id,
-        startYear: 2025, endYear: 2040, executionPct: 100,
-        capex: 165000, opex: 3500, externalFunding: 520000, financialLifetime: 10, technicalAssetLife: 15,
-        notes: "CenterPoint Energy rebate $15k. Savings NPV over 10yr factored in.",
+        scenarioId: scenarioAmbitious.id, interventionId: bmsRollout.id,
+        startYear: 2025, endYear: 2037, executionPct: 100,
+        capex: 280000, opex: 12000, externalFunding: 650000, financialLifetime: 12, technicalAssetLife: 12,
+        notes: "Energy savings NPV over 12yr factored in. Siemens Desigo CC platform.",
       },
       {
-        scenarioId: scenarioAmbitious.id, interventionId: houstonBMS.id,
-        startYear: 2026, endYear: 2038, executionPct: 100,
-        capex: 110000, opex: 5000, financialLifetime: 12, technicalAssetLife: 12,
-      },
-      // Los Angeles
-      {
-        scenarioId: scenarioAmbitious.id, interventionId: laFleet.id,
-        startYear: 2025, endYear: 2035, executionPct: 100, implementationPacePctPerYear: 33,
-        capex: 850000, opex: 24000, externalFunding: 150000, financialLifetime: 7, technicalAssetLife: 10,
-        notes: "CARB HVIP incentive applied. Charging infra via Electrify America partner programme.",
+        scenarioId: scenarioAmbitious.id, interventionId: heatPumpToronto.id,
+        startYear: 2027, endYear: 2047, executionPct: 100,
+        capex: 1800000, opex: 45000, externalFunding: 270000, financialLifetime: 20, technicalAssetLife: 20,
+        personnelTimeDays: 90, personnelRatePerDay: 700,
+        notes: "Greener Homes Grant + IESO SaveOnEnergy. Feasibility complete.",
       },
       {
-        scenarioId: scenarioAmbitious.id, interventionId: laSolar.id,
-        startYear: 2025, endYear: 2050, executionPct: 100,
-        capex: 200000, opex: 6000, financialLifetime: 25, technicalAssetLife: 25,
-      },
-      // Seattle
-      {
-        scenarioId: scenarioAmbitious.id, interventionId: seattleHP.id,
-        startYear: 2026, endYear: 2046, executionPct: 100,
-        capex: 420000, opex: 12000, financialLifetime: 20, technicalAssetLife: 20,
-        notes: "Puget Sound Energy electrification rebate $30k.",
-      },
-      {
-        scenarioId: scenarioAmbitious.id, interventionId: seattleIns.id,
-        startYear: 2027, endYear: 2057, executionPct: 100,
-        capex: 210000, opex: 3500, externalFunding: 380000, financialLifetime: 25, technicalAssetLife: 30,
-        notes: "Works sequenced after heat pump to maximise synergy. Heating savings NPV factored in.",
-      },
-      // Atlanta
-      {
-        scenarioId: scenarioAmbitious.id, interventionId: atlantaSolar.id,
-        startYear: 2026, endYear: 2051, executionPct: 100,
-        capex: 230000, opex: 7500, financialLifetime: 25, technicalAssetLife: 25,
-        notes: "Georgia Power commercial solar rebate $20k.",
-      },
-      {
-        scenarioId: scenarioAmbitious.id, interventionId: atlantaLED.id,
-        startYear: 2025, endYear: 2040, executionPct: 100,
-        capex: 98000, opex: 2500, externalFunding: 310000, financialLifetime: 10, technicalAssetLife: 15,
-        notes: "Savings NPV over 10yr factored in. Simple payback 2.8 years.",
-      },
-      // Denver
-      {
-        scenarioId: scenarioAmbitious.id, interventionId: denverSolar.id,
-        startYear: 2026, endYear: 2051, executionPct: 100,
-        capex: 155000, opex: 5000, financialLifetime: 25, technicalAssetLife: 25,
-        notes: "Colorado C-PACE financing available — zero-down installation.",
-      },
-      {
-        scenarioId: scenarioAmbitious.id, interventionId: denverFleet.id,
-        startYear: 2025, endYear: 2035, executionPct: 100, implementationPacePctPerYear: 50,
-        capex: 380000, opex: 11000, externalFunding: 60000, financialLifetime: 8, technicalAssetLife: 10,
-        notes: "CVRP $4,500 per vehicle × 10 vehicles assumed.",
-      },
-      // Toronto
-      {
-        scenarioId: scenarioAmbitious.id, interventionId: torontoFleet.id,
-        startYear: 2026, endYear: 2036, executionPct: 100, implementationPacePctPerYear: 25,
-        capex: 1100000, opex: 28000, externalFunding: 180000, financialLifetime: 7, technicalAssetLife: 10,
-        notes: "iZEV incentive CAD 5,000 per vehicle × 18 vehicles = CAD 90k.",
-      },
-      {
-        scenarioId: scenarioAmbitious.id, interventionId: torontoIns.id,
-        startYear: 2025, endYear: 2055, executionPct: 100,
-        capex: 280000, opex: 4000, externalFunding: 520000, financialLifetime: 30, technicalAssetLife: 30,
-        notes: "Canada Greener Homes Grant applicable. Natural gas savings NPV factored in.",
-      },
-      // Vancouver
-      {
-        scenarioId: scenarioAmbitious.id, interventionId: vanHP.id,
-        startYear: 2025, endYear: 2045, executionPct: 100,
-        capex: 450000, opex: 13000, financialLifetime: 20, technicalAssetLife: 20,
-        notes: "BC Hydro CleanBC incentive 25% of capex = $112k.",
-      },
-      {
-        scenarioId: scenarioAmbitious.id, interventionId: vanPPA.id,
-        startYear: 2025, endYear: 2035, executionPct: 100,
-        capex: 0, opex: 0, financialLifetime: 10, technicalAssetLife: 10,
-        notes: "Virtual PPA at spot price parity. No balance sheet impact.",
-      },
-      // Calgary
-      {
-        scenarioId: scenarioAmbitious.id, interventionId: calgarySolar.id,
-        startYear: 2027, endYear: 2052, executionPct: 100,
-        capex: 115000, opex: 3500, financialLifetime: 25, technicalAssetLife: 25,
-      },
-      {
-        scenarioId: scenarioAmbitious.id, interventionId: calgaryLED.id,
-        startYear: 2025, endYear: 2040, executionPct: 100,
-        capex: 72000, opex: 2000, externalFunding: 225000, financialLifetime: 10, technicalAssetLife: 15,
-        notes: "ATCO Energy savings rebate. Savings NPV over 10yr factored in.",
-      },
-      // Warsaw
-      {
-        scenarioId: scenarioAmbitious.id, interventionId: warsawIns.id,
-        startYear: 2025, endYear: 2055, executionPct: 100,
-        capex: 310000, opex: 5500, externalFunding: 650000, financialLifetime: 30, technicalAssetLife: 30,
-        notes: "EU Cohesion Fund grant. High Polish grid factor makes insulation ROI very strong.",
-      },
-      {
-        scenarioId: scenarioAmbitious.id, interventionId: warsawLED.id,
-        startYear: 2025, endYear: 2040, executionPct: 100,
-        capex: 185000, opex: 4500, externalFunding: 680000, financialLifetime: 10, technicalAssetLife: 15,
-        notes: "High Polish grid intensity (0.773 kgCO2e/kWh) gives exceptional tCO2e savings.",
-      },
-      // Company-wide
-      {
-        scenarioId: scenarioAmbitious.id, interventionId: ppa.id,
+        scenarioId: scenarioAmbitious.id, interventionId: ppaUK.id,
         startYear: 2025, endYear: 2035, executionPct: 100,
         capex: 0, opex: 0, financialLifetime: 10, technicalAssetLife: 10,
         notes: "Sleeved PPA signed. Premium vs market rate £3.50/MWh.",
       },
       {
+        scenarioId: scenarioAmbitious.id, interventionId: ppaNorthAm.id,
+        startYear: 2026, endYear: 2036, executionPct: 100,
+        capex: 0, opex: 0, financialLifetime: 10, technicalAssetLife: 10,
+        notes: "Virtual PPA at spot price parity. No balance sheet impact.",
+      },
+      {
         scenarioId: scenarioAmbitious.id, interventionId: supplyChain.id,
         startYear: 2026, endYear: 2050, executionPct: 90,
         capex: 0, opex: 120000, financialLifetime: 7, technicalAssetLife: null,
-        personnelTimeDays: 180, personnelRatePerDay: 600,
-        notes: "Internal sustainability team + external consultant for supplier engagement.",
+        personnelTimeDays: 200, personnelRatePerDay: 650,
+        notes: "Internal sustainability team (3 FTE) + external consultant for supplier engagement.",
       },
       {
-        scenarioId: scenarioAmbitious.id, interventionId: ukEV.id,
+        scenarioId: scenarioAmbitious.id, interventionId: evCharging.id,
         startYear: 2026, endYear: 2038, executionPct: 100,
-        capex: 380000, opex: 15000, financialLifetime: 12, technicalAssetLife: 12,
-        notes: "Workplace Charging Scheme grant £350 per socket × 60 sockets = £21k.",
+        capex: 480000, opex: 18000, financialLifetime: 12, technicalAssetLife: 12,
+        notes: "Workplace Charging Scheme grant £350 per socket × 80 sockets = £28k.",
+      },
+      {
+        scenarioId: scenarioAmbitious.id, interventionId: refrigerant.id,
+        startYear: 2025, endYear: 2040, executionPct: 100,
+        capex: 350000, opex: 8000, financialLifetime: 15, technicalAssetLife: 15,
+        notes: "F-Gas regulation mandates phase-out by 2030. Proactive approach avoids penalties.",
+      },
+      {
+        scenarioId: scenarioAmbitious.id, interventionId: warsawThermal.id,
+        startYear: 2025, endYear: 2055, executionPct: 100,
+        capex: 520000, opex: 8000, externalFunding: 182000, financialLifetime: 25, technicalAssetLife: 30,
+        notes: "EU Cohesion Fund grant (35% of capex). High Polish grid factor gives exceptional ROI.",
       },
     ],
   });
 
-  // ── Conservative ScenarioInterventions ────────────────────────────────────
+  // ── Moderate ScenarioInterventions ──────────────────────────────────────
   await db.scenarioIntervention.createMany({
     data: [
-      // Sheffield Works (committed/in-progress — same dates)
       {
-        scenarioId: scenarioConservative.id, interventionId: solar.id,
+        scenarioId: scenarioModerate.id, interventionId: solarSheffield.id,
         startYear: 2024, endYear: 2049, executionPct: 100,
         capex: 0, opex: 18000, financialLifetime: 20, technicalAssetLife: 25,
         notes: "Already committed — PPA in place.",
       },
       {
-        scenarioId: scenarioConservative.id, interventionId: led.id,
+        scenarioId: scenarioModerate.id, interventionId: ledSheffield.id,
         startYear: 2023, endYear: 2038, executionPct: 100,
         capex: 285000, opex: 5000, financialLifetime: 10, technicalAssetLife: 15,
         notes: "Already completed — included for reporting.",
       },
       {
-        scenarioId: scenarioConservative.id, interventionId: compAir.id,
-        startYear: 2024, endYear: 2039, executionPct: 100,
-        capex: 128000, opex: 8000, financialLifetime: 8, technicalAssetLife: 15,
-        notes: "Already in progress — included as committed.",
+        scenarioId: scenarioModerate.id, interventionId: heatPumpSheffield.id,
+        startYear: 2025, endYear: 2045, executionPct: 95,
+        capex: 3800000, opex: 95000, externalFunding: 760000, financialLifetime: 20, technicalAssetLife: 20,
+        personnelTimeDays: 120, personnelRatePerDay: 750,
+        notes: "In progress. 95% execution assumes minor commissioning delays.",
       },
       {
-        scenarioId: scenarioConservative.id, interventionId: insulation.id,
-        startYear: 2026, endYear: 2056, executionPct: 95,
-        capex: 420000, opex: 5000, financialLifetime: 25, technicalAssetLife: 30,
-        notes: "Deferred 1 year to align with contractor availability.",
+        scenarioId: scenarioModerate.id, interventionId: fleetElec.id,
+        startYear: 2027, endYear: 2037, executionPct: 85, implementationPacePctPerYear: 20,
+        capex: 2400000, opex: 65000, externalFunding: 300000, financialLifetime: 7, technicalAssetLife: 10,
+        personnelTimeDays: 60, personnelRatePerDay: 600,
+        notes: "1-year delay to align with HGV model availability. Reduced incentive assumptions.",
       },
       {
-        scenarioId: scenarioConservative.id, interventionId: heatPump.id,
-        startYear: 2030, endYear: 2050, executionPct: 85,
-        capex: 3800000, opex: 95000, financialLifetime: 20, technicalAssetLife: 20,
-        notes: "Deferred to align with boiler end-of-life 2030. No grant funding assumed.",
-      },
-      // Manchester
-      {
-        scenarioId: scenarioConservative.id, interventionId: manchFleet.id,
-        startYear: 2029, endYear: 2039, executionPct: 75, implementationPacePctPerYear: 20,
-        capex: 1200000, opex: 32000, financialLifetime: 7, technicalAssetLife: 10,
-        notes: "Deferred pending EV HGV market maturity and charging infrastructure readiness.",
+        scenarioId: scenarioModerate.id, interventionId: insulationMulti.id,
+        startYear: 2027, endYear: 2057, executionPct: 95,
+        capex: 1200000, opex: 15000, externalFunding: 360000, financialLifetime: 25, technicalAssetLife: 30,
+        notes: "1-year delay for contractor scheduling. Warsaw phase may slip to 2028.",
       },
       {
-        scenarioId: scenarioConservative.id, interventionId: manchBMS.id,
-        startYear: 2027, endYear: 2039, executionPct: 90,
-        capex: 95000, opex: 4000, financialLifetime: 12, technicalAssetLife: 12,
-      },
-      // Bristol
-      {
-        scenarioId: scenarioConservative.id, interventionId: bristolHP.id,
-        startYear: 2030, endYear: 2050, executionPct: 85,
-        capex: 680000, opex: 18000, financialLifetime: 20, technicalAssetLife: 20,
-        notes: "Deferred to coincide with boiler replacement cycle.",
-      },
-      {
-        scenarioId: scenarioConservative.id, interventionId: bristolSolar.id,
-        startYear: 2028, endYear: 2053, executionPct: 100,
-        capex: 150000, opex: 4000, financialLifetime: 25, technicalAssetLife: 25,
-      },
-      // Chicago
-      {
-        scenarioId: scenarioConservative.id, interventionId: chicagoSolar.id,
-        startYear: 2028, endYear: 2053, executionPct: 100,
-        capex: 280000, opex: 9000, financialLifetime: 25, technicalAssetLife: 25,
-      },
-      {
-        scenarioId: scenarioConservative.id, interventionId: chicagoCA.id,
-        startYear: 2027, endYear: 2042, executionPct: 90,
-        capex: 95000, opex: 5000, financialLifetime: 8, technicalAssetLife: 15,
-      },
-      // Houston
-      {
-        scenarioId: scenarioConservative.id, interventionId: houstonLED.id,
-        startYear: 2027, endYear: 2042, executionPct: 90,
-        capex: 165000, opex: 3500, financialLifetime: 10, technicalAssetLife: 15,
-      },
-      {
-        scenarioId: scenarioConservative.id, interventionId: houstonBMS.id,
-        startYear: 2028, endYear: 2040, executionPct: 85,
-        capex: 110000, opex: 5000, financialLifetime: 12, technicalAssetLife: 12,
-      },
-      // Los Angeles
-      {
-        scenarioId: scenarioConservative.id, interventionId: laFleet.id,
-        startYear: 2028, endYear: 2038, executionPct: 75, implementationPacePctPerYear: 25,
-        capex: 850000, opex: 24000, financialLifetime: 7, technicalAssetLife: 10,
-        notes: "Deferred — awaiting longer-range EV options for LA–Phoenix route.",
-      },
-      {
-        scenarioId: scenarioConservative.id, interventionId: laSolar.id,
+        scenarioId: scenarioModerate.id, interventionId: solarBristol.id,
         startYear: 2027, endYear: 2052, executionPct: 100,
-        capex: 200000, opex: 6000, financialLifetime: 25, technicalAssetLife: 25,
-      },
-      // Seattle
-      {
-        scenarioId: scenarioConservative.id, interventionId: seattleHP.id,
-        startYear: 2029, endYear: 2049, executionPct: 85,
-        capex: 420000, opex: 12000, financialLifetime: 20, technicalAssetLife: 20,
+        capex: 150000, opex: 4000, financialLifetime: 25, technicalAssetLife: 25,
+        notes: "Deferred 1 year to sequence after Sheffield insulation work.",
       },
       {
-        scenarioId: scenarioConservative.id, interventionId: seattleIns.id,
-        startYear: 2029, endYear: 2059, executionPct: 90,
-        capex: 210000, opex: 3500, financialLifetime: 25, technicalAssetLife: 30,
-      },
-      // Atlanta
-      {
-        scenarioId: scenarioConservative.id, interventionId: atlantaSolar.id,
-        startYear: 2028, endYear: 2053, executionPct: 100,
-        capex: 230000, opex: 7500, financialLifetime: 25, technicalAssetLife: 25,
+        scenarioId: scenarioModerate.id, interventionId: solarChicago.id,
+        startYear: 2027, endYear: 2052, executionPct: 100,
+        capex: 280000, opex: 9000, financialLifetime: 25, technicalAssetLife: 25,
+        notes: "Deferred 1 year for utility interconnection approval.",
       },
       {
-        scenarioId: scenarioConservative.id, interventionId: atlantaLED.id,
-        startYear: 2027, endYear: 2042, executionPct: 90,
-        capex: 98000, opex: 2500, financialLifetime: 10, technicalAssetLife: 15,
-      },
-      // Denver
-      {
-        scenarioId: scenarioConservative.id, interventionId: denverSolar.id,
-        startYear: 2028, endYear: 2053, executionPct: 100,
-        capex: 155000, opex: 5000, financialLifetime: 25, technicalAssetLife: 25,
+        scenarioId: scenarioModerate.id, interventionId: bmsRollout.id,
+        startYear: 2026, endYear: 2038, executionPct: 95,
+        capex: 280000, opex: 12000, externalFunding: 520000, financialLifetime: 12, technicalAssetLife: 12,
+        notes: "1-year delay. Vancouver site may require additional commissioning.",
       },
       {
-        scenarioId: scenarioConservative.id, interventionId: denverFleet.id,
-        startYear: 2028, endYear: 2038, executionPct: 75, implementationPacePctPerYear: 40,
-        capex: 380000, opex: 11000, financialLifetime: 8, technicalAssetLife: 10,
-      },
-      // Toronto
-      {
-        scenarioId: scenarioConservative.id, interventionId: torontoFleet.id,
-        startYear: 2029, endYear: 2039, executionPct: 70, implementationPacePctPerYear: 20,
-        capex: 1100000, opex: 28000, financialLifetime: 7, technicalAssetLife: 10,
-        notes: "Deferred pending availability of Class 5 EV trucks in Canada.",
+        scenarioId: scenarioModerate.id, interventionId: heatPumpToronto.id,
+        startYear: 2028, endYear: 2048, executionPct: 90,
+        capex: 1800000, opex: 45000, externalFunding: 180000, financialLifetime: 20, technicalAssetLife: 20,
+        personnelTimeDays: 90, personnelRatePerDay: 700,
+        notes: "1-year delay for detailed engineering. Reduced grant assumptions.",
       },
       {
-        scenarioId: scenarioConservative.id, interventionId: torontoIns.id,
-        startYear: 2027, endYear: 2057, executionPct: 90,
-        capex: 280000, opex: 4000, financialLifetime: 30, technicalAssetLife: 30,
-      },
-      // Vancouver
-      {
-        scenarioId: scenarioConservative.id, interventionId: vanHP.id,
-        startYear: 2028, endYear: 2048, executionPct: 85,
-        capex: 450000, opex: 13000, financialLifetime: 20, technicalAssetLife: 20,
+        scenarioId: scenarioModerate.id, interventionId: ppaUK.id,
+        startYear: 2026, endYear: 2036, executionPct: 100,
+        capex: 0, opex: 0, financialLifetime: 10, technicalAssetLife: 10,
+        notes: "Deferred 1 year to align with existing electricity contract expiry.",
       },
       {
-        scenarioId: scenarioConservative.id, interventionId: vanPPA.id,
+        scenarioId: scenarioModerate.id, interventionId: ppaNorthAm.id,
         startYear: 2027, endYear: 2037, executionPct: 100,
         capex: 0, opex: 0, financialLifetime: 10, technicalAssetLife: 10,
-        notes: "Deferred until existing electricity contracts expire.",
-      },
-      // Calgary
-      {
-        scenarioId: scenarioConservative.id, interventionId: calgarySolar.id,
-        startYear: 2029, endYear: 2054, executionPct: 100,
-        capex: 115000, opex: 3500, financialLifetime: 25, technicalAssetLife: 25,
+        notes: "Deferred to coincide with US site contract renewals.",
       },
       {
-        scenarioId: scenarioConservative.id, interventionId: calgaryLED.id,
-        startYear: 2027, endYear: 2042, executionPct: 90,
-        capex: 72000, opex: 2000, financialLifetime: 10, technicalAssetLife: 15,
-      },
-      // Warsaw
-      {
-        scenarioId: scenarioConservative.id, interventionId: warsawIns.id,
-        startYear: 2027, endYear: 2057, executionPct: 90,
-        capex: 310000, opex: 5500, financialLifetime: 30, technicalAssetLife: 30,
-        notes: "Deferred pending EU grant confirmation.",
+        scenarioId: scenarioModerate.id, interventionId: supplyChain.id,
+        startYear: 2027, endYear: 2050, executionPct: 78,
+        capex: 0, opex: 100000, financialLifetime: 7, technicalAssetLife: null,
+        personnelTimeDays: 160, personnelRatePerDay: 650,
+        notes: "Reduced execution reflecting supplier engagement challenges. 2 FTE internal team.",
       },
       {
-        scenarioId: scenarioConservative.id, interventionId: warsawLED.id,
-        startYear: 2027, endYear: 2042, executionPct: 90,
-        capex: 185000, opex: 4500, financialLifetime: 10, technicalAssetLife: 15,
-      },
-      // Company-wide
-      {
-        scenarioId: scenarioConservative.id, interventionId: ppa.id,
-        startYear: 2027, endYear: 2037, executionPct: 100,
-        capex: 0, opex: 0, financialLifetime: 10, technicalAssetLife: 10,
-        notes: "Deferred until current electricity contract expires 2027.",
+        scenarioId: scenarioModerate.id, interventionId: evCharging.id,
+        startYear: 2027, endYear: 2039, executionPct: 95,
+        capex: 480000, opex: 18000, financialLifetime: 12, technicalAssetLife: 12,
+        notes: "1-year delay to co-schedule with fleet electrification phase.",
       },
       {
-        scenarioId: scenarioConservative.id, interventionId: supplyChain.id,
-        startYear: 2029, endYear: 2050, executionPct: 65,
-        capex: 0, opex: 85000, financialLifetime: 7, technicalAssetLife: null,
-        personnelTimeDays: 120, personnelRatePerDay: 600,
-        notes: "Reduced execution reflecting supplier engagement challenges.",
+        scenarioId: scenarioModerate.id, interventionId: refrigerant.id,
+        startYear: 2026, endYear: 2041, executionPct: 95,
+        capex: 350000, opex: 8000, financialLifetime: 15, technicalAssetLife: 15,
+        notes: "1-year delay. Regulatory deadline provides buffer.",
       },
       {
-        scenarioId: scenarioConservative.id, interventionId: ukEV.id,
-        startYear: 2028, endYear: 2040, executionPct: 90,
-        capex: 380000, opex: 15000, financialLifetime: 12, technicalAssetLife: 12,
+        scenarioId: scenarioModerate.id, interventionId: warsawThermal.id,
+        startYear: 2026, endYear: 2056, executionPct: 95,
+        capex: 520000, opex: 8000, externalFunding: 130000, financialLifetime: 25, technicalAssetLife: 30,
+        notes: "1-year delay pending EU grant confirmation (reduced to 25% assumption).",
       },
     ],
   });
 
-  console.log(`✅  Scenarios: "${scenarioAmbitious.name}" + "${scenarioConservative.name}"`);
-  console.log(`    64 ScenarioIntervention records (32 per scenario) with technicalAssetLife`);
+  // ── Conservative ScenarioInterventions ──────────────────────────────────
+  await db.scenarioIntervention.createMany({
+    data: [
+      {
+        scenarioId: scenarioConservative.id, interventionId: solarSheffield.id,
+        startYear: 2024, endYear: 2049, executionPct: 100,
+        capex: 0, opex: 18000, financialLifetime: 20, technicalAssetLife: 25,
+        notes: "Already committed — PPA in place.",
+      },
+      {
+        scenarioId: scenarioConservative.id, interventionId: ledSheffield.id,
+        startYear: 2023, endYear: 2038, executionPct: 100,
+        capex: 285000, opex: 5000, financialLifetime: 10, technicalAssetLife: 15,
+        notes: "Already completed — included for reporting.",
+      },
+      {
+        scenarioId: scenarioConservative.id, interventionId: heatPumpSheffield.id,
+        startYear: 2025, endYear: 2045, executionPct: 85,
+        capex: 3800000, opex: 95000, financialLifetime: 20, technicalAssetLife: 20,
+        personnelTimeDays: 120, personnelRatePerDay: 750,
+        notes: "In progress but 85% execution assumes partial commissioning issues and no grant top-up.",
+      },
+      {
+        scenarioId: scenarioConservative.id, interventionId: fleetElec.id,
+        startYear: 2029, endYear: 2039, executionPct: 70, implementationPacePctPerYear: 18,
+        capex: 2400000, opex: 65000, financialLifetime: 7, technicalAssetLife: 10,
+        personnelTimeDays: 60, personnelRatePerDay: 600,
+        notes: "Deferred 3 years pending EV HGV market maturity. No grant funding assumed.",
+      },
+      {
+        scenarioId: scenarioConservative.id, interventionId: insulationMulti.id,
+        startYear: 2029, endYear: 2059, executionPct: 85,
+        capex: 1200000, opex: 15000, financialLifetime: 25, technicalAssetLife: 30,
+        notes: "Deferred 3 years. Only Sheffield and Warsaw prioritised in first phase.",
+      },
+      {
+        scenarioId: scenarioConservative.id, interventionId: solarBristol.id,
+        startYear: 2029, endYear: 2054, executionPct: 100,
+        capex: 150000, opex: 4000, financialLifetime: 25, technicalAssetLife: 25,
+        notes: "Deferred 3 years. Low risk — solar proven technology.",
+      },
+      {
+        scenarioId: scenarioConservative.id, interventionId: solarChicago.id,
+        startYear: 2029, endYear: 2054, executionPct: 100,
+        capex: 280000, opex: 9000, financialLifetime: 25, technicalAssetLife: 25,
+        notes: "Deferred 3 years. ITC credit may decrease to 22% by then.",
+      },
+      {
+        scenarioId: scenarioConservative.id, interventionId: bmsRollout.id,
+        startYear: 2028, endYear: 2040, executionPct: 85,
+        capex: 280000, opex: 12000, financialLifetime: 12, technicalAssetLife: 12,
+        notes: "Deferred 3 years. Phased rollout — Manchester first, others follow.",
+      },
+      {
+        scenarioId: scenarioConservative.id, interventionId: heatPumpToronto.id,
+        startYear: 2031, endYear: 2051, executionPct: 80,
+        capex: 1800000, opex: 45000, financialLifetime: 20, technicalAssetLife: 20,
+        personnelTimeDays: 90, personnelRatePerDay: 700,
+        notes: "Deferred to 2031 — aligned with boiler end-of-life. No grant funding assumed.",
+      },
+      {
+        scenarioId: scenarioConservative.id, interventionId: ppaUK.id,
+        startYear: 2028, endYear: 2038, executionPct: 100,
+        capex: 0, opex: 0, financialLifetime: 10, technicalAssetLife: 10,
+        notes: "Deferred 3 years. Current electricity contracts run until 2028.",
+      },
+      {
+        scenarioId: scenarioConservative.id, interventionId: ppaNorthAm.id,
+        startYear: 2029, endYear: 2039, executionPct: 100,
+        capex: 0, opex: 0, financialLifetime: 10, technicalAssetLife: 10,
+        notes: "Deferred 3 years pending US site contract renewals.",
+      },
+      {
+        scenarioId: scenarioConservative.id, interventionId: supplyChain.id,
+        startYear: 2030, endYear: 2050, executionPct: 60,
+        capex: 0, opex: 80000, financialLifetime: 7, technicalAssetLife: null,
+        personnelTimeDays: 100, personnelRatePerDay: 600,
+        notes: "Deferred 4 years. 60% execution reflects significant supplier engagement challenges.",
+      },
+      {
+        scenarioId: scenarioConservative.id, interventionId: evCharging.id,
+        startYear: 2029, endYear: 2041, executionPct: 85,
+        capex: 480000, opex: 18000, financialLifetime: 12, technicalAssetLife: 12,
+        notes: "Deferred 3 years. AC-only in first phase; DC rapid added later.",
+      },
+      {
+        scenarioId: scenarioConservative.id, interventionId: refrigerant.id,
+        startYear: 2028, endYear: 2043, executionPct: 85,
+        capex: 350000, opex: 8000, financialLifetime: 15, technicalAssetLife: 15,
+        notes: "Deferred but must complete before 2030 F-Gas deadline. Some sites may use interim solutions.",
+      },
+      {
+        scenarioId: scenarioConservative.id, interventionId: warsawThermal.id,
+        startYear: 2028, endYear: 2058, executionPct: 85,
+        capex: 520000, opex: 8000, financialLifetime: 25, technicalAssetLife: 30,
+        notes: "Deferred 3 years. No EU grant assumed. LED phase only in first year.",
+      },
+    ],
+  });
 
-  // ── Assets ────────────────────────────────────────────────────────────────
+  console.log(`✅  Scenarios: "${scenarioAmbitious.name}" + "${scenarioModerate.name}" + "${scenarioConservative.name}"`);
+  console.log(`    45 ScenarioIntervention records (15 per scenario) with technicalAssetLife`);
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // ASSETS — 56 across all 14 sites
+  // ──────────────────────────────────────────────────────────────────────────
+
   await db.asset.createMany({
     data: [
+      // ── Sheffield Works (7 assets) ─────────────────────────────────────────
       {
         companyId: meridian.id, siteId: sheffield.id,
         name: "Gas-Fired Boiler System (2× 2MW)",
-        assetType: "Industrial Boiler", category: "Heating",
+        assetType: "Industrial Boiler", category: "HVAC",
         conditionRating: "RED",
-        conditionNotes: "Primary heat exchanger showing corrosion. Efficiency dropped from 88% to 71% at last service (Oct 2024). Urgent replacement recommended.",
+        conditionNotes: "Primary heat exchanger showing corrosion. Efficiency dropped from 88% to 71% at last service (Oct 2024). IETF heat pump replacement underway.",
         installationYear: 2004, expectedUsefulLife: 20,
         currentEnergyKwh: 5200000, scope: 1,
-        linkedInterventionId: heatPump.id, alertThresholdYears: 5, replacementPriority: "CRITICAL",
+        linkedInterventionId: heatPumpSheffield.id,
+        alertThresholdYears: 5, replacementPriority: "CRITICAL",
       },
       {
         companyId: meridian.id, siteId: sheffield.id,
-        name: "Compressed Air System (160 kW)",
-        assetType: "Compressor", category: "Compressed Air",
+        name: "Compressed Air System (160 kW Atlas Copco)",
+        assetType: "Compressor", category: "HVAC",
         conditionRating: "AMBER",
-        conditionNotes: "VSD retrofit completed on 3 of 4 compressors. Final Atlas Copco GA110 unit awaiting parts Q2 2025. Leak rate reduced from 28% to 14%.",
+        conditionNotes: "VSD retrofit completed on 3 of 4 compressors. Leak rate reduced from 28% to 14%. Final unit awaiting parts Q2 2025.",
         installationYear: 2013, expectedUsefulLife: 15,
         currentEnergyKwh: 1080000, scope: 2,
-        linkedInterventionId: compAir.id, alertThresholdYears: 3, replacementPriority: "MEDIUM",
-      },
-      {
-        companyId: meridian.id, siteId: manchester.id,
-        name: "Diesel HGV Fleet (14 vehicles)",
-        assetType: "Heavy Goods Vehicles", category: "Transport",
-        conditionRating: "AMBER",
-        conditionNotes: "Mixed fleet: 6× Euro VI DAF XF (2019), 5× Euro VI Volvo FH (2020), 3× Ford Transit (2021). Two DAF units due for PSVAR compliance upgrade.",
-        installationYear: 2019, expectedUsefulLife: 7,
-        currentEnergyKwh: null, scope: 1,
-        linkedInterventionId: manchFleet.id, alertThresholdYears: 3, replacementPriority: "HIGH",
+        alertThresholdYears: 3, replacementPriority: "MEDIUM",
       },
       {
         companyId: meridian.id, siteId: sheffield.id,
-        name: "Injection Moulding Machines (×6 Arburg)",
-        assetType: "Manufacturing Equipment", category: "Industrial Process",
+        name: "Injection Moulding Machines (×6 Arburg 570S)",
+        assetType: "Manufacturing Equipment", category: "electrical",
         conditionRating: "GREEN",
-        conditionNotes: "All 6 Arburg Allrounder 570S units operating within spec. Hydraulic seals replaced on units 3 and 5 in 2024.",
+        conditionNotes: "All 6 units operating within spec. Hydraulic seals replaced on units 3 and 5 in 2024. Predictive maintenance programme active.",
         installationYear: 2017, expectedUsefulLife: 15,
         currentEnergyKwh: 2180000, scope: 2,
         alertThresholdYears: 3, replacementPriority: "LOW",
       },
       {
+        companyId: meridian.id, siteId: sheffield.id,
+        name: "Overhead Crane System (10t Demag)",
+        assetType: "Crane", category: "electrical",
+        conditionRating: "AMBER",
+        conditionNotes: "Hoist motor bearings showing wear at last inspection (Aug 2024). Scheduled replacement Q1 2025. Runway rails in good condition.",
+        installationYear: 2008, expectedUsefulLife: 25,
+        currentEnergyKwh: 45000, scope: 2,
+        alertThresholdYears: 3, replacementPriority: "MEDIUM",
+      },
+      {
+        companyId: meridian.id, siteId: sheffield.id,
+        name: "Rooftop Solar PV Array (1.2 MWp)",
+        assetType: "Solar PV", category: "energy",
+        conditionRating: "GREEN",
+        conditionNotes: "Installed Q2 2024 under PPA. All 2,400 panels performing at rated output. Inverter efficiency 98.2%. First annual inspection due Q2 2025.",
+        installationYear: 2024, expectedUsefulLife: 25,
+        currentEnergyKwh: null, scope: 2,
+        linkedInterventionId: solarSheffield.id,
+        alertThresholdYears: 5, replacementPriority: "LOW",
+      },
+      {
+        companyId: meridian.id, siteId: sheffield.id,
+        name: "Power Distribution Transformer (1.6 MVA)",
+        assetType: "Transformer", category: "electrical",
+        conditionRating: "AMBER",
+        conditionNotes: "Oil analysis shows elevated dissolved gas levels (acetylene 12 ppm). Increased monitoring frequency to quarterly. Consider replacement by 2028.",
+        installationYear: 2002, expectedUsefulLife: 30,
+        currentEnergyKwh: null, scope: 2,
+        alertThresholdYears: 4, replacementPriority: "HIGH",
+      },
+      {
+        companyId: meridian.id, siteId: sheffield.id,
+        name: "Forklift Fleet (×4 Diesel Linde H30)",
+        assetType: "Forklift", category: "fleet",
+        conditionRating: "AMBER",
+        conditionNotes: "Mixed condition. Units 1-2 (2017) due for replacement; units 3-4 (2020) in acceptable condition. Consider electric replacements.",
+        installationYear: 2017, expectedUsefulLife: 8,
+        currentEnergyKwh: 62000, scope: 1,
+        alertThresholdYears: 2, replacementPriority: "HIGH",
+      },
+
+      // ── Manchester Distribution Centre (5 assets) ──────────────────────────
+      {
         companyId: meridian.id, siteId: manchester.id,
-        name: "Cold Store Chiller Units (×3)",
+        name: "Diesel HGV Fleet (14 vehicles)",
+        assetType: "Heavy Goods Vehicles", category: "fleet",
+        conditionRating: "AMBER",
+        conditionNotes: "Mixed fleet: 6× Euro VI DAF XF (2019), 5× Volvo FH (2020), 3× Ford Transit (2021). Two DAF units due for PSVAR compliance upgrade.",
+        installationYear: 2019, expectedUsefulLife: 7,
+        currentEnergyKwh: null, scope: 1,
+        linkedInterventionId: fleetElec.id,
+        alertThresholdYears: 3, replacementPriority: "HIGH",
+      },
+      {
+        companyId: meridian.id, siteId: manchester.id,
+        name: "Cold Store Chiller Units (×3 Carrier 30XA)",
         assetType: "Refrigeration", category: "HVAC",
         conditionRating: "RED",
-        conditionNotes: "R22 refrigerant — phase-out mandated by F-Gas regulation. Unit 1 suffered compressor failure Nov 2024. Refill of R22 is no longer legal — replacement urgent.",
+        conditionNotes: "R22 refrigerant — phase-out mandated by F-Gas regulation. Unit 1 compressor failure Nov 2024. R22 refill no longer legal — urgent replacement required.",
         installationYear: 2006, expectedUsefulLife: 15,
         currentEnergyKwh: 620000, scope: 2,
+        linkedInterventionId: refrigerant.id,
         alertThresholdYears: 5, replacementPriority: "CRITICAL",
       },
       {
-        companyId: meridian.id, siteId: bristol.id,
-        name: "CNC Machining Centres (×3 Mazak)",
-        assetType: "CNC Machine", category: "Industrial Process",
+        companyId: meridian.id, siteId: manchester.id,
+        name: "Automated Sortation System (Beumer BG Line)",
+        assetType: "Sortation System", category: "electrical",
         conditionRating: "GREEN",
-        conditionNotes: "Mazak Integrex i-400 units under extended warranty until 2027. On predictive maintenance programme.",
+        conditionNotes: "Installed 2020. Annual throughput 1.2M parcels. All conveyors and diverters within tolerance. Software upgraded to v4.2 in 2024.",
+        installationYear: 2020, expectedUsefulLife: 15,
+        currentEnergyKwh: 340000, scope: 2,
+        alertThresholdYears: 3, replacementPriority: "LOW",
+      },
+      {
+        companyId: meridian.id, siteId: manchester.id,
+        name: "Dock Levellers & Loading Bays (×8 Hörmann)",
+        assetType: "Dock Equipment", category: "other",
+        conditionRating: "AMBER",
+        conditionNotes: "Hydraulic rams on bays 3 and 7 showing slow return speed. Seals replaced on bay 3 (Sep 2024). Bay 7 scheduled for Q1 2025.",
+        installationYear: 2005, expectedUsefulLife: 20,
+        currentEnergyKwh: 8000, scope: 2,
+        alertThresholdYears: 3, replacementPriority: "MEDIUM",
+      },
+      {
+        companyId: meridian.id, siteId: manchester.id,
+        name: "Warehouse LED High-Bay Lighting (200 fittings)",
+        assetType: "LED Lighting", category: "electrical",
+        conditionRating: "GREEN",
+        conditionNotes: "Retrofitted 2022. All luminaires at >90% rated output. DALI control system with occupancy and daylight sensing operational.",
+        installationYear: 2022, expectedUsefulLife: 15,
+        currentEnergyKwh: 120000, scope: 2,
+        alertThresholdYears: 5, replacementPriority: "LOW",
+      },
+
+      // ── Bristol Assembly (4 assets) ────────────────────────────────────────
+      {
+        companyId: meridian.id, siteId: bristol.id,
+        name: "CNC Machining Centres (×3 Mazak Integrex i-400)",
+        assetType: "CNC Machine", category: "electrical",
+        conditionRating: "GREEN",
+        conditionNotes: "Under extended warranty until 2027. Predictive maintenance programme shows all spindles within tolerance. Coolant system upgraded Q3 2024.",
         installationYear: 2021, expectedUsefulLife: 15,
         currentEnergyKwh: 980000, scope: 2,
         alertThresholdYears: 3, replacementPriority: "LOW",
       },
       {
-        companyId: meridian.id, siteId: chicago.id,
-        name: "Chicago CNC Line (×4 Haas)",
-        assetType: "CNC Machine", category: "Industrial Process",
+        companyId: meridian.id, siteId: bristol.id,
+        name: "Gas Boiler (400 kW Viessmann Vitocrossal)",
+        assetType: "Boiler", category: "HVAC",
+        conditionRating: "AMBER",
+        conditionNotes: "Efficiency at 84% (rated 92%). Heat exchanger scaling detected at annual service (Nov 2024). Chemical flush scheduled Q1 2025.",
+        installationYear: 2012, expectedUsefulLife: 20,
+        currentEnergyKwh: 1400000, scope: 1,
+        alertThresholdYears: 3, replacementPriority: "MEDIUM",
+      },
+      {
+        companyId: meridian.id, siteId: bristol.id,
+        name: "Paint Spray Booth with Extraction",
+        assetType: "Paint Booth", category: "other",
+        conditionRating: "AMBER",
+        conditionNotes: "Extraction fans operating at 92% of rated flow. Filters replaced quarterly. Booth lighting upgraded to LED 2023. VOC monitoring compliant.",
+        installationYear: 2010, expectedUsefulLife: 20,
+        currentEnergyKwh: 210000, scope: 2,
+        alertThresholdYears: 3, replacementPriority: "MEDIUM",
+      },
+      {
+        companyId: meridian.id, siteId: bristol.id,
+        name: "Screw Compressor (75 kW CompAir L75)",
+        assetType: "Compressor", category: "HVAC",
         conditionRating: "GREEN",
+        conditionNotes: "VSD equipped from factory. Air-end overhaul completed 2023 at 40,000 hours. Running at 65% average load — well within efficient range.",
+        installationYear: 2016, expectedUsefulLife: 15,
+        currentEnergyKwh: 380000, scope: 2,
+        alertThresholdYears: 3, replacementPriority: "LOW",
+      },
+
+      // ── Birmingham Corporate HQ (3 assets) ────────────────────────────────
+      {
+        companyId: meridian.id, siteId: birmingham.id,
+        name: "VRF HVAC System (Daikin VRV IV)",
+        assetType: "VRF System", category: "HVAC",
+        conditionRating: "GREEN",
+        conditionNotes: "Installed at fit-out. R410A refrigerant — transition to R32 units planned at first major service (2028). All 12 indoor units operating within spec.",
+        installationYear: 2018, expectedUsefulLife: 15,
+        currentEnergyKwh: 380000, scope: 2,
+        alertThresholdYears: 3, replacementPriority: "LOW",
+      },
+      {
+        companyId: meridian.id, siteId: birmingham.id,
+        name: "Server Room UPS & Cooling (80 kVA Eaton)",
+        assetType: "UPS", category: "IT",
+        conditionRating: "AMBER",
+        conditionNotes: "Battery bank showing 78% capacity at last test (Jun 2024). Runtime reduced from 15min to 11min. Battery replacement quote obtained — £18k.",
+        installationYear: 2018, expectedUsefulLife: 10,
+        currentEnergyKwh: 95000, scope: 2,
+        alertThresholdYears: 2, replacementPriority: "HIGH",
+      },
+      {
+        companyId: meridian.id, siteId: birmingham.id,
+        name: "Company Car Pool (×8 PHEV BMW 330e)",
+        assetType: "Company Cars", category: "fleet",
+        conditionRating: "AMBER",
+        conditionNotes: "4-year lease expiring Q2 2026. Average 12,000 miles/yr per vehicle. 45% electric mode usage tracked via telematics. EV replacement planned at lease end.",
+        installationYear: 2022, expectedUsefulLife: 4,
+        currentEnergyKwh: null, scope: 1,
+        alertThresholdYears: 1, replacementPriority: "MEDIUM",
+      },
+
+      // ── Chicago Manufacturing Hub (5 assets) ──────────────────────────────
+      {
+        companyId: meridian.id, siteId: chicago.id,
+        name: "CNC Line (×4 Haas VF-4SS)",
+        assetType: "CNC Machine", category: "electrical",
+        conditionRating: "GREEN",
+        conditionNotes: "All 4 units on preventive maintenance contract. Spindle hours: 18k-22k range. Next major service at 30k hours (~2027).",
         installationYear: 2020, expectedUsefulLife: 15,
         currentEnergyKwh: 1600000, scope: 2,
         alertThresholdYears: 3, replacementPriority: "LOW",
       },
       {
         companyId: meridian.id, siteId: chicago.id,
-        name: "Chicago HVAC System",
-        assetType: "HVAC", category: "Heating",
+        name: "Rooftop HVAC Package Units (×3 Trane)",
+        assetType: "Rooftop Unit", category: "HVAC",
         conditionRating: "AMBER",
+        conditionNotes: "R410A refrigerant. Unit 2 compressor showing elevated vibration at last inspection. Economiser dampers replaced on unit 1 (Oct 2024).",
         installationYear: 2012, expectedUsefulLife: 20,
         currentEnergyKwh: 880000, scope: 1,
         alertThresholdYears: 3, replacementPriority: "MEDIUM",
       },
       {
-        companyId: meridian.id, siteId: toronto.id,
-        name: "Toronto Assembly Robots (×8)",
-        assetType: "Robotics", category: "Industrial Process",
+        companyId: meridian.id, siteId: chicago.id,
+        name: "Air Compressor (90 kW Ingersoll Rand R90n)",
+        assetType: "Compressor", category: "HVAC",
+        conditionRating: "AMBER",
+        conditionNotes: "Fixed-speed unit — VSD retrofit under evaluation. Air-end at 35,000 hours (overhaul recommended at 40,000). Leak rate 18% — above target.",
+        installationYear: 2014, expectedUsefulLife: 15,
+        currentEnergyKwh: 520000, scope: 2,
+        alertThresholdYears: 3, replacementPriority: "MEDIUM",
+      },
+      {
+        companyId: meridian.id, siteId: chicago.id,
+        name: "Electrical Switchgear (480V Square D)",
+        assetType: "Switchgear", category: "electrical",
         conditionRating: "GREEN",
+        conditionNotes: "Thermographic survey (Sep 2024) clear. All breakers within trip-test tolerance. Arc flash study updated 2023.",
+        installationYear: 2015, expectedUsefulLife: 30,
+        currentEnergyKwh: null, scope: 2,
+        alertThresholdYears: 5, replacementPriority: "LOW",
+      },
+      {
+        companyId: meridian.id, siteId: chicago.id,
+        name: "Cooling Tower (200 kW BAC Series 3000)",
+        assetType: "Cooling Tower", category: "HVAC",
+        conditionRating: "AMBER",
+        conditionNotes: "Fill media showing biological fouling — chemical treatment regime increased. Fan motor bearings replaced Q2 2024. Basin liner needs assessment.",
+        installationYear: 2010, expectedUsefulLife: 20,
+        currentEnergyKwh: 260000, scope: 2,
+        alertThresholdYears: 3, replacementPriority: "MEDIUM",
+      },
+
+      // ── Houston Operations Centre (4 assets) ──────────────────────────────
+      {
+        companyId: meridian.id, siteId: houston.id,
+        name: "Process Furnace (Natural Gas, 1.5 MW)",
+        assetType: "Furnace", category: "HVAC",
+        conditionRating: "AMBER",
+        conditionNotes: "Refractory lining repaired Q3 2024 (hot spot detected by IR survey). Burner efficiency at 83%. NOx emissions within TCEQ permit limits.",
+        installationYear: 2008, expectedUsefulLife: 20,
+        currentEnergyKwh: 3200000, scope: 1,
+        alertThresholdYears: 3, replacementPriority: "HIGH",
+      },
+      {
+        companyId: meridian.id, siteId: houston.id,
+        name: "Central HVAC System (Carrier 30RB chiller + AHUs)",
+        assetType: "HVAC System", category: "HVAC",
+        conditionRating: "RED",
+        conditionNotes: "Chiller COP dropped to 3.1 (rated 5.2). Condenser tubes fouled — chemical clean overdue. AHU-3 fan belt slipping. High cooling load in Houston summer makes failure critical.",
+        installationYear: 2005, expectedUsefulLife: 20,
+        currentEnergyKwh: 1100000, scope: 2,
+        alertThresholdYears: 5, replacementPriority: "CRITICAL",
+      },
+      {
+        companyId: meridian.id, siteId: houston.id,
+        name: "Cooling Water System (circulation pumps + tower)",
+        assetType: "Cooling System", category: "HVAC",
+        conditionRating: "AMBER",
+        conditionNotes: "Pump 1 vibration trending upward — bearing replacement scheduled. Water treatment chemical costs increasing due to high ambient temperatures.",
+        installationYear: 2008, expectedUsefulLife: 20,
+        currentEnergyKwh: 180000, scope: 2,
+        alertThresholdYears: 3, replacementPriority: "MEDIUM",
+      },
+      {
+        companyId: meridian.id, siteId: houston.id,
+        name: "Emergency Generator (250 kVA Caterpillar)",
+        assetType: "Generator", category: "energy",
+        conditionRating: "GREEN",
+        conditionNotes: "Monthly test runs satisfactory. Full load bank test (Dec 2024) — start time 8 sec, voltage regulation within 2%. Diesel tank inspected and compliant.",
+        installationYear: 2015, expectedUsefulLife: 20,
+        currentEnergyKwh: 5000, scope: 1,
+        alertThresholdYears: 5, replacementPriority: "LOW",
+      },
+
+      // ── Los Angeles Facility (3 assets) ────────────────────────────────────
+      {
+        companyId: meridian.id, siteId: losAngeles.id,
+        name: "Delivery Van Fleet (×8 Diesel Ford Transit)",
+        assetType: "Light Commercial Vehicles", category: "fleet",
+        conditionRating: "AMBER",
+        conditionNotes: "Average 28,000 miles/yr. Units 1-3 (2019) approaching end of life. CARB ZEV mandate requires EV replacements. Telematics installed on all vehicles.",
+        installationYear: 2019, expectedUsefulLife: 6,
+        currentEnergyKwh: null, scope: 1,
+        linkedInterventionId: fleetElec.id,
+        alertThresholdYears: 2, replacementPriority: "HIGH",
+      },
+      {
+        companyId: meridian.id, siteId: losAngeles.id,
+        name: "Warehouse HVAC (×2 Mitsubishi Split Systems)",
+        assetType: "Split System", category: "HVAC",
+        conditionRating: "GREEN",
+        conditionNotes: "Installed during 2021 warehouse expansion. R32 refrigerant — compliant with future regulations. Both units performing at rated SEER.",
+        installationYear: 2021, expectedUsefulLife: 15,
+        currentEnergyKwh: 280000, scope: 2,
+        alertThresholdYears: 3, replacementPriority: "LOW",
+      },
+      {
+        companyId: meridian.id, siteId: losAngeles.id,
+        name: "Dock Equipment & Powered Roller Conveyors",
+        assetType: "Dock Equipment", category: "other",
+        conditionRating: "AMBER",
+        conditionNotes: "6 dock positions. Roller drives on positions 2 and 5 showing increased current draw. Seals on dock shelters 1, 3, 6 need replacement for energy efficiency.",
+        installationYear: 2012, expectedUsefulLife: 15,
+        currentEnergyKwh: 42000, scope: 2,
+        alertThresholdYears: 3, replacementPriority: "MEDIUM",
+      },
+
+      // ── Seattle Tech Centre (3 assets) ─────────────────────────────────────
+      {
+        companyId: meridian.id, siteId: seattle.id,
+        name: "VRF Heat Pump System (Mitsubishi CITY MULTI)",
+        assetType: "VRF System", category: "HVAC",
+        conditionRating: "GREEN",
+        conditionNotes: "Installed at construction. R410A refrigerant. All 8 indoor units performing well. Seattle's mild climate gives excellent COP (4.8 average). BMS integrated.",
+        installationYear: 2015, expectedUsefulLife: 15,
+        currentEnergyKwh: 240000, scope: 2,
+        alertThresholdYears: 3, replacementPriority: "LOW",
+      },
+      {
+        companyId: meridian.id, siteId: seattle.id,
+        name: "Server Room UPS (60 kVA APC Symmetra)",
+        assetType: "UPS", category: "IT",
+        conditionRating: "AMBER",
+        conditionNotes: "Battery module 3 showing elevated temperature. Runtime at 82% of rated. Preventive battery replacement scheduled Q2 2025. Cooling system adequate.",
+        installationYear: 2015, expectedUsefulLife: 10,
+        currentEnergyKwh: 72000, scope: 2,
+        alertThresholdYears: 2, replacementPriority: "MEDIUM",
+      },
+      {
+        companyId: meridian.id, siteId: seattle.id,
+        name: "EV Charging Stations (×6 ChargePoint CT4000)",
+        assetType: "EV Charger", category: "energy",
+        conditionRating: "GREEN",
+        conditionNotes: "Installed 2022 for employee EV adoption. Average utilisation 68%. All units operational — network connectivity 99.5% uptime. Level 2 (7.7 kW each).",
+        installationYear: 2022, expectedUsefulLife: 10,
+        currentEnergyKwh: 35000, scope: 2,
+        alertThresholdYears: 2, replacementPriority: "LOW",
+      },
+
+      // ── Atlanta Distribution (4 assets) ────────────────────────────────────
+      {
+        companyId: meridian.id, siteId: atlanta.id,
+        name: "Metal Halide High-Bay Lighting (180 fittings)",
+        assetType: "High-Bay Lighting", category: "electrical",
+        conditionRating: "RED",
+        conditionNotes: "Original installation. 400W metal halide fittings — high energy use and poor lumen maintenance. 12 fittings failed in 2024. LED retrofit urgently needed.",
+        installationYear: 2003, expectedUsefulLife: 15,
+        currentEnergyKwh: 520000, scope: 2,
+        alertThresholdYears: 5, replacementPriority: "HIGH",
+      },
+      {
+        companyId: meridian.id, siteId: atlanta.id,
+        name: "Rooftop HVAC Package Units (×4 Lennox)",
+        assetType: "Rooftop Unit", category: "HVAC",
+        conditionRating: "AMBER",
+        conditionNotes: "R410A refrigerant. Units 1-2 approaching end of rated life (2003, 20-yr). Economisers on units 3-4 functioning well. Hot Georgia summers stress systems.",
+        installationYear: 2008, expectedUsefulLife: 20,
+        currentEnergyKwh: 720000, scope: 2,
+        alertThresholdYears: 3, replacementPriority: "MEDIUM",
+      },
+      {
+        companyId: meridian.id, siteId: atlanta.id,
+        name: "Conveyor & Sortation System (Dematic)",
+        assetType: "Conveyor System", category: "electrical",
+        conditionRating: "GREEN",
+        conditionNotes: "Installed 2019. Throughput 800k parcels/yr. Belt tracking and tension within spec. Drive VFDs upgraded to latest firmware Q3 2024.",
+        installationYear: 2019, expectedUsefulLife: 15,
+        currentEnergyKwh: 280000, scope: 2,
+        alertThresholdYears: 3, replacementPriority: "LOW",
+      },
+      {
+        companyId: meridian.id, siteId: atlanta.id,
+        name: "Dock Doors & Seals (×6 overhead sectional)",
+        assetType: "Dock Equipment", category: "envelope",
+        conditionRating: "AMBER",
+        conditionNotes: "Spring mechanisms on doors 1, 4, 6 requiring increased maintenance. Rubber dock seals on positions 2, 3 are compressed and need replacement for thermal performance.",
+        installationYear: 2003, expectedUsefulLife: 20,
+        currentEnergyKwh: null, scope: 2,
+        alertThresholdYears: 3, replacementPriority: "MEDIUM",
+      },
+
+      // ── Denver Regional Office (2 assets) ──────────────────────────────────
+      {
+        companyId: meridian.id, siteId: denver.id,
+        name: "Gas Furnace HVAC System (Trane XR95)",
+        assetType: "Furnace HVAC", category: "HVAC",
+        conditionRating: "AMBER",
+        conditionNotes: "95% AFUE rated but flame sensor issues causing intermittent shutdowns. Heat exchanger inspection due 2025. Denver altitude (5,280 ft) affects combustion efficiency.",
+        installationYear: 2012, expectedUsefulLife: 18,
+        currentEnergyKwh: 320000, scope: 1,
+        alertThresholdYears: 3, replacementPriority: "MEDIUM",
+      },
+      {
+        companyId: meridian.id, siteId: denver.id,
+        name: "Office LED Lighting System (Philips)",
+        assetType: "LED Lighting", category: "electrical",
+        conditionRating: "GREEN",
+        conditionNotes: "Installed during 2019 office refurbishment. Tunable white (3000-5000K) with occupancy sensing. All 120 panels operating — 3 drivers replaced under warranty.",
+        installationYear: 2019, expectedUsefulLife: 15,
+        currentEnergyKwh: 48000, scope: 2,
+        alertThresholdYears: 5, replacementPriority: "LOW",
+      },
+
+      // ── Toronto Assembly Plant (5 assets) ──────────────────────────────────
+      {
+        companyId: meridian.id, siteId: toronto.id,
+        name: "Assembly Line Robots (×8 Fanuc M-20iD/25)",
+        assetType: "Robotics", category: "electrical",
+        conditionRating: "GREEN",
+        conditionNotes: "All 8 units on Fanuc ZDT predictive maintenance. Joint 2 reducer replaced on robot 5 (Q2 2024). Average cycle time within 0.3% of nominal.",
         installationYear: 2022, expectedUsefulLife: 12,
         currentEnergyKwh: 1200000, scope: 2,
         alertThresholdYears: 3, replacementPriority: "LOW",
       },
       {
-        companyId: meridian.id, siteId: warsaw.id,
-        name: "Warsaw Industrial Boiler",
-        assetType: "Industrial Boiler", category: "Heating",
+        companyId: meridian.id, siteId: toronto.id,
+        name: "Industrial Gas Boiler (1.2 MW Cleaver-Brooks)",
+        assetType: "Industrial Boiler", category: "HVAC",
         conditionRating: "AMBER",
+        conditionNotes: "Efficiency at 79% (rated 86%). Firetube showing minor pitting at last TSSA inspection. Burner tuning completed Q4 2024. Heat pump replacement planned.",
+        installationYear: 2007, expectedUsefulLife: 25,
+        currentEnergyKwh: 4100000, scope: 1,
+        linkedInterventionId: heatPumpToronto.id,
+        alertThresholdYears: 4, replacementPriority: "HIGH",
+      },
+      {
+        companyId: meridian.id, siteId: toronto.id,
+        name: "Air Compressor (120 kW Kaeser CSD 122)",
+        assetType: "Compressor", category: "HVAC",
+        conditionRating: "AMBER",
+        conditionNotes: "Sigma frequency VSD controller showing intermittent faults. Running at fixed speed pending parts (ETA Q1 2025). Energy penalty estimated at 15%.",
+        installationYear: 2015, expectedUsefulLife: 15,
+        currentEnergyKwh: 680000, scope: 2,
+        alertThresholdYears: 3, replacementPriority: "MEDIUM",
+      },
+      {
+        companyId: meridian.id, siteId: toronto.id,
+        name: "Paint Line with Curing Oven (gas-fired)",
+        assetType: "Paint Line", category: "other",
+        conditionRating: "AMBER",
+        conditionNotes: "Oven insulation thinning — surface temperature 15°C above expected. Conveyor chain stretch measured at 1.2% (replacement at 2%). VOC abatement system compliant.",
+        installationYear: 2010, expectedUsefulLife: 20,
+        currentEnergyKwh: 1800000, scope: 1,
+        alertThresholdYears: 3, replacementPriority: "MEDIUM",
+      },
+      {
+        companyId: meridian.id, siteId: toronto.id,
+        name: "High-Voltage Transformer (2 MVA, 27.6kV/600V)",
+        assetType: "Transformer", category: "electrical",
+        conditionRating: "GREEN",
+        conditionNotes: "Oil analysis (Oct 2024) all parameters within limits. Winding resistance balanced. Tap changer serviced Q3 2024. Outdoor installation in good condition.",
+        installationYear: 2018, expectedUsefulLife: 35,
+        currentEnergyKwh: null, scope: 2,
+        alertThresholdYears: 5, replacementPriority: "LOW",
+      },
+
+      // ── Vancouver Logistics (3 assets) ─────────────────────────────────────
+      {
+        companyId: meridian.id, siteId: vancouver.id,
+        name: "Ground-Source Heat Pump (150 kW NIBE F1345)",
+        assetType: "Heat Pump", category: "HVAC",
+        conditionRating: "GREEN",
+        conditionNotes: "Installed 2019 as primary heating/cooling. COP averaging 4.6 (heating) and 5.8 (cooling). Ground loop temperatures stable. BC Hydro monitoring confirms performance.",
+        installationYear: 2019, expectedUsefulLife: 20,
+        currentEnergyKwh: 420000, scope: 2,
+        alertThresholdYears: 5, replacementPriority: "LOW",
+      },
+      {
+        companyId: meridian.id, siteId: vancouver.id,
+        name: "Walk-in Refrigeration Unit (Hussman)",
+        assetType: "Refrigeration", category: "HVAC",
+        conditionRating: "AMBER",
+        conditionNotes: "R404A refrigerant — high GWP (3,922). Compressor showing reduced capacity in summer months. Condensate drain heating element failed twice in 2024.",
+        installationYear: 2012, expectedUsefulLife: 15,
+        currentEnergyKwh: 185000, scope: 2,
+        linkedInterventionId: refrigerant.id,
+        alertThresholdYears: 3, replacementPriority: "MEDIUM",
+      },
+      {
+        companyId: meridian.id, siteId: vancouver.id,
+        name: "Electric Forklift Fleet (×3 Toyota 8FBMT25)",
+        assetType: "Electric Forklift", category: "fleet",
+        conditionRating: "GREEN",
+        conditionNotes: "Lithium-ion battery upgrade completed 2023 (replaced lead-acid). Fast-charge capable — full charge in 1.5 hours. All units within service intervals.",
+        installationYear: 2018, expectedUsefulLife: 10,
+        currentEnergyKwh: 28000, scope: 2,
+        alertThresholdYears: 2, replacementPriority: "LOW",
+      },
+
+      // ── Calgary Processing Facility (4 assets) ─────────────────────────────
+      {
+        companyId: meridian.id, siteId: calgary.id,
+        name: "Processing Furnace (Natural Gas, 800 kW)",
+        assetType: "Furnace", category: "HVAC",
+        conditionRating: "AMBER",
+        conditionNotes: "Operating at 81% thermal efficiency (rated 88%). Refractory inspection (Jul 2024) shows minor spalling in zones 2-3. Annual NOx testing compliant with AER limits.",
+        installationYear: 2008, expectedUsefulLife: 22,
+        currentEnergyKwh: 2100000, scope: 1,
+        alertThresholdYears: 3, replacementPriority: "HIGH",
+      },
+      {
+        companyId: meridian.id, siteId: calgary.id,
+        name: "Air Compressor (55 kW Atlas Copco GA55)",
+        assetType: "Compressor", category: "HVAC",
+        conditionRating: "GREEN",
+        conditionNotes: "VSD equipped. Running at 55% average load. Air-end service completed at 20,000 hours (Q3 2024). Leak survey shows 11% loss rate — acceptable.",
+        installationYear: 2018, expectedUsefulLife: 15,
+        currentEnergyKwh: 290000, scope: 2,
+        alertThresholdYears: 3, replacementPriority: "LOW",
+      },
+      {
+        companyId: meridian.id, siteId: calgary.id,
+        name: "Overhead Bridge Crane (5t Konecranes CXT)",
+        assetType: "Crane", category: "electrical",
+        conditionRating: "AMBER",
+        conditionNotes: "Wire rope showing surface corrosion — replacement scheduled Q1 2025. Hoist brake adjusted Q4 2024. Runway rails within alignment tolerance.",
+        installationYear: 2010, expectedUsefulLife: 25,
+        currentEnergyKwh: 22000, scope: 2,
+        alertThresholdYears: 3, replacementPriority: "MEDIUM",
+      },
+      {
+        companyId: meridian.id, siteId: calgary.id,
+        name: "Building Lighting (T8 Fluorescent, 120 fittings)",
+        assetType: "Fluorescent Lighting", category: "electrical",
+        conditionRating: "RED",
+        conditionNotes: "Original T8 fittings. 18 ballasts failed in 2024. Lumen depreciation severe — measured at 55% of rated output. LED retrofit included in Warsaw Thermal package scope extension.",
+        installationYear: 1996, expectedUsefulLife: 15,
+        currentEnergyKwh: 185000, scope: 2,
+        alertThresholdYears: 5, replacementPriority: "HIGH",
+      },
+
+      // ── Warsaw European Hub (4 assets) ─────────────────────────────────────
+      {
+        companyId: meridian.id, siteId: warsaw.id,
+        name: "Industrial Boiler (800 kW Viessmann Vitoplex)",
+        assetType: "Industrial Boiler", category: "HVAC",
+        conditionRating: "AMBER",
+        conditionNotes: "Efficiency at 82% (rated 90%). Condensate return system partially blocked. Water treatment regime needs review. Replacement aligned with thermal envelope upgrade.",
         installationYear: 2010, expectedUsefulLife: 20,
         currentEnergyKwh: 2400000, scope: 1,
+        linkedInterventionId: warsawThermal.id,
         alertThresholdYears: 4, replacementPriority: "HIGH",
+      },
+      {
+        companyId: meridian.id, siteId: warsaw.id,
+        name: "CNC Machining Centres (×2 DMG MORI CLX 450)",
+        assetType: "CNC Machine", category: "electrical",
+        conditionRating: "GREEN",
+        conditionNotes: "Installed 2020 with EU structural funds. Both units on DMG MORI WERKBLiQ digital maintenance platform. Spindle hours 14k and 16k respectively.",
+        installationYear: 2020, expectedUsefulLife: 15,
+        currentEnergyKwh: 680000, scope: 2,
+        alertThresholdYears: 3, replacementPriority: "LOW",
+      },
+      {
+        companyId: meridian.id, siteId: warsaw.id,
+        name: "Industrial Lighting (High-Pressure Sodium, 150 fittings)",
+        assetType: "HPS Lighting", category: "electrical",
+        conditionRating: "RED",
+        conditionNotes: "Original HPS fittings from 2007 build. Poor colour rendering (CRI 25) affects quality inspection. 22 fittings failed in 2024. LED retrofit critical — included in thermal upgrade.",
+        installationYear: 2007, expectedUsefulLife: 12,
+        currentEnergyKwh: 410000, scope: 2,
+        alertThresholdYears: 5, replacementPriority: "HIGH",
+      },
+      {
+        companyId: meridian.id, siteId: warsaw.id,
+        name: "Step-Down Transformer (630 kVA, 15kV/400V)",
+        assetType: "Transformer", category: "electrical",
+        conditionRating: "GREEN",
+        conditionNotes: "Oil-immersed dry-type. Thermographic survey (Nov 2024) clear. All bushings and connections within spec. Load factor averaging 62%.",
+        installationYear: 2007, expectedUsefulLife: 30,
+        currentEnergyKwh: null, scope: 2,
+        alertThresholdYears: 5, replacementPriority: "LOW",
       },
     ],
   });
-  console.log(`✅  Assets (10) created`);
+  console.log(`✅  Assets (56) created across 14 sites`);
 
   // ── Actual Emissions ──────────────────────────────────────────────────────
   await db.actualEmission.createMany({
     data: [
-      { companyId: meridian.id, year: 2022, scope1: 6700, scope2: 3800, scope3: 7300, notes: "Baseline year — verified by EY (Limited Assurance)" },
-      { companyId: meridian.id, year: 2023, scope1: 6450, scope2: 3620, scope3: 7180, notes: "LED upgrade complete mid-year. Natural gas reduction from insulation pilot." },
-      { companyId: meridian.id, year: 2024, scope1: 6300, scope2: 3100, scope3: 7050, notes: "Solar PV at Sheffield online Q2. Compressed air optimisation delivering." },
+      { companyId: meridian.id, year: 2022, scope1: 15500, scope2: 12500, scope3: 17000, notes: "Baseline year — verified by EY (Limited Assurance). GHG Protocol Corporate Standard." },
+      { companyId: meridian.id, year: 2023, scope1: 15100, scope2: 11700, scope3: 16700, notes: "LED upgrade at Sheffield complete mid-year. Natural gas reduction from BMS pilot." },
+      { companyId: meridian.id, year: 2024, scope1: 14600, scope2: 10400, scope3: 16400, notes: "Solar PV at Sheffield online Q2. Compressed air savings delivering. Supply chain engagement pilot started." },
+      { companyId: meridian.id, year: 2025, scope1: 14100, scope2: 9200, scope3: 16100, notes: "Heat pump installation progressing. UK PPA contracted. Warsaw thermal envelope Phase 1 underway." },
     ],
   });
-  console.log(`✅  Actual emissions: 2022, 2023, 2024`);
+  console.log(`✅  Actual emissions: 2022, 2023, 2024, 2025`);
 
-  // ── Energy Readings ───────────────────────────────────────────────────────
-  const energyReadings = [];
+  // ── Energy Readings (5 sites × 2024, Sheffield 2023+2024) ─────────────────
+  const energyReadings: Array<{
+    companyId: string; siteId: string; year: number; month: number;
+    energyType: string; kWh: number; cost: number;
+  }> = [];
+
   for (let month = 1; month <= 12; month++) {
+    // Sheffield 2023 — Electricity + Gas
     energyReadings.push(
-      { companyId: meridian.id, siteId: sheffield.id, year: 2023, month, energyType: "ELECTRICITY", kWh: 185000 + Math.round(Math.random() * 20000), cost: 38000 + Math.round(Math.random() * 5000) },
-      { companyId: meridian.id, siteId: sheffield.id, year: 2023, month, energyType: "GAS", kWh: 420000 + Math.round(Math.random() * 40000), cost: 14000 + Math.round(Math.random() * 2000) },
-      { companyId: meridian.id, siteId: sheffield.id, year: 2024, month, energyType: "ELECTRICITY", kWh: 160000 + Math.round(Math.random() * 20000), cost: 33000 + Math.round(Math.random() * 4000) },
-      { companyId: meridian.id, siteId: sheffield.id, year: 2024, month, energyType: "GAS", kWh: 380000 + Math.round(Math.random() * 30000), cost: 13000 + Math.round(Math.random() * 1500) },
-      { companyId: meridian.id, siteId: manchester.id, year: 2024, month, energyType: "ELECTRICITY", kWh: 95000 + Math.round(Math.random() * 15000), cost: 19500 + Math.round(Math.random() * 3000) },
-      { companyId: meridian.id, siteId: manchester.id, year: 2024, month, energyType: "DIESEL", kWh: 85000 + Math.round(Math.random() * 10000), cost: 12000 + Math.round(Math.random() * 2000) }
+      { companyId: meridian.id, siteId: sheffield.id, year: 2023, month, energyType: "ELECTRICITY", kWh: 195000 + Math.round(Math.random() * 25000), cost: 40000 + Math.round(Math.random() * 6000) },
+      { companyId: meridian.id, siteId: sheffield.id, year: 2023, month, energyType: "GAS", kWh: 450000 + Math.round(Math.random() * 50000), cost: 16500 + Math.round(Math.random() * 2500) },
+    );
+    // Sheffield 2024 — Electricity + Gas (lower post-solar)
+    energyReadings.push(
+      { companyId: meridian.id, siteId: sheffield.id, year: 2024, month, energyType: "ELECTRICITY", kWh: 165000 + Math.round(Math.random() * 22000), cost: 34000 + Math.round(Math.random() * 5000) },
+      { companyId: meridian.id, siteId: sheffield.id, year: 2024, month, energyType: "GAS", kWh: 410000 + Math.round(Math.random() * 40000), cost: 15000 + Math.round(Math.random() * 2000) },
+    );
+    // Manchester 2024 — Electricity + Diesel
+    energyReadings.push(
+      { companyId: meridian.id, siteId: manchester.id, year: 2024, month, energyType: "ELECTRICITY", kWh: 98000 + Math.round(Math.random() * 16000), cost: 20000 + Math.round(Math.random() * 3500) },
+      { companyId: meridian.id, siteId: manchester.id, year: 2024, month, energyType: "DIESEL", kWh: 88000 + Math.round(Math.random() * 12000), cost: 12500 + Math.round(Math.random() * 2000) },
+    );
+    // Chicago 2024 — Electricity + Gas
+    energyReadings.push(
+      { companyId: meridian.id, siteId: chicago.id, year: 2024, month, energyType: "ELECTRICITY", kWh: 145000 + Math.round(Math.random() * 20000), cost: 17500 + Math.round(Math.random() * 2500) },
+      { companyId: meridian.id, siteId: chicago.id, year: 2024, month, energyType: "GAS", kWh: 280000 + Math.round(Math.random() * 35000), cost: 8400 + Math.round(Math.random() * 1500) },
+    );
+    // Toronto 2024 — Electricity + Gas
+    energyReadings.push(
+      { companyId: meridian.id, siteId: toronto.id, year: 2024, month, energyType: "ELECTRICITY", kWh: 160000 + Math.round(Math.random() * 22000), cost: 14500 + Math.round(Math.random() * 2000) },
+      { companyId: meridian.id, siteId: toronto.id, year: 2024, month, energyType: "GAS", kWh: 340000 + Math.round(Math.random() * 45000), cost: 10200 + Math.round(Math.random() * 1800) },
+    );
+    // Warsaw 2024 — Electricity + District Heating
+    energyReadings.push(
+      { companyId: meridian.id, siteId: warsaw.id, year: 2024, month, energyType: "ELECTRICITY", kWh: 110000 + Math.round(Math.random() * 18000), cost: 11000 + Math.round(Math.random() * 2000) },
+      { companyId: meridian.id, siteId: warsaw.id, year: 2024, month, energyType: "DISTRICT_HEAT", kWh: 180000 + Math.round(Math.random() * 30000), cost: 7200 + Math.round(Math.random() * 1200) },
     );
   }
   await db.energyReading.createMany({ data: energyReadings });
-  console.log(`✅  Energy readings: Sheffield (2023-2024) + Manchester (2024)`);
+  console.log(`✅  Energy readings: Sheffield (2023-2024) + Manchester, Chicago, Toronto, Warsaw (2024)`);
+
+  // ── Emission Factors ──────────────────────────────────────────────────────
+  await db.companyEmissionFactor.createMany({
+    data: [
+      { companyId: meridian.id, region: "UK", fuelType: "Electricity", value: 0.207, source: "DEFRA 2022 Conversion Factors", year: 2022 },
+      { companyId: meridian.id, region: "UK", fuelType: "Natural Gas", value: 0.184, source: "DEFRA 2022 Conversion Factors", year: 2022 },
+      { companyId: meridian.id, region: "UK", fuelType: "Diesel", value: 2.556, source: "DEFRA 2022 Conversion Factors (per litre)", year: 2022 },
+      { companyId: meridian.id, region: "US", fuelType: "Electricity", value: 0.386, source: "EPA eGRID 2022 (national average)", year: 2022 },
+      { companyId: meridian.id, region: "Canada", fuelType: "Electricity", value: 0.120, source: "NIR 2022 (national average)", year: 2022 },
+      { companyId: meridian.id, region: "Poland", fuelType: "Electricity", value: 0.773, source: "KOBiZE 2022", year: 2022 },
+    ],
+  });
+  console.log(`✅  Emission factors: 6 (UK electricity/gas/diesel, US/Canada/Poland electricity)`);
 
   // ──────────────────────────────────────────────────────────────────────────
   // COMPANY 2 — Apex Composites Ltd (second tenant for isolation testing)
@@ -1655,17 +1605,19 @@ Meridian Forge Ltd (full data):
 Apex Composites Ltd (second tenant):
   Admin  → david.walsh@apexcomposites.co.uk
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Meridian Forge baseline: 17,800 tCO₂e (2022)
-  Scope 1: 6,700 tCO₂e | Scope 2: 3,800 tCO₂e | Scope 3: 7,300 tCO₂e
-Sites: 13 (Sheffield, Manchester, Bristol + 10 international)
-Interventions: 32 (across all 13 sites + company-wide)
-Scenarios: 2 (Ambitious 2040 / Conservative 2050)
-  Each with 32 interventions; all ScenarioIntervention records have technicalAssetLife
-  MACC chart: ~12 negative-MAC bars (LED, insulation, compressed air) + positive-MAC bars
-Assets: 10 (2× RED, 4× AMBER, 4× GREEN)
-Actual emissions: 2022–2024
-Energy readings: Sheffield (2023-2024) + Manchester (2024)
-Growth rates: 1.2% (2023-2030), 0.5% (2031-2040), 0% (2041-2050)
+Meridian Forge baseline: 45,000 tCO₂e (2022)
+  Scope 1: 15,500 tCO₂e | Scope 2: 12,500 tCO₂e | Scope 3: 17,000 tCO₂e
+Sites: 14 (4 UK, 6 US, 3 Canada, 1 Poland)
+Interventions: 15 (across sites + company-wide)
+Scenarios: 3 (Ambitious 2040 / Moderate 2045 / Conservative 2050)
+  Each with 15 interventions; all ScenarioIntervention records have technicalAssetLife
+Assets: 56 across all 14 sites
+  Condition: 5× RED, 25× AMBER, 26× GREEN
+  Priority: 3× CRITICAL, 10× HIGH, 23× MEDIUM, 20× LOW
+Actual emissions: 2022–2025
+Energy readings: 6 sites (Sheffield 2023-2024, Manchester/Chicago/Toronto/Warsaw 2024)
+Emission factors: 6 (UK, US, Canada, Poland)
+Growth rates: 1.5% (2023-2028), 0.8% (2029-2038), 0% (2039-2050)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 `);
 }
