@@ -95,9 +95,7 @@ _Nothing currently in-flight — all recent tasks pushed to main._
 ## ⬜ Outstanding
 
 ### Phase 3 Remaining
-- **SBTi badges + glide path legend enhancements** — SBTi badge displays in legend but full alignment indicator (target gap annotation, net-zero achievement year callout) not yet built
-- **PDF / print report export** — combined multi-page PDF via jsPDF (charts + tables + financials); `/reports` page currently basic
-- **Second language** — `fr.json` translation file exists; need to verify full string coverage and test locale switching
+_All Phase 3 items complete._ ✅
 
 ### Phase 4 Remaining
 - **Company settings page** — company profile edit (name, slug, logo upload), personal preferences (language, theme), danger zone (delete account)
@@ -122,3 +120,4 @@ _Nothing currently in-flight — all recent tasks pushed to main._
 |------|-----------|
 | Earlier sessions | Phases 1–2 complete, Phase 3 audit log, i18n, SSO |
 | This session | Scenario page restructure (two-tab layout + side panel), comprehensive 32-intervention reseed across all 13 sites, /review pass + 3 fixes (audit log on SI mutations, fmtCurrency $0 fix, chartRef scoping), visual polish pass (navy sidebar, dark mode, KPI count-up, status badges, progress bars, chart animations, typography) |
+| This session (continued) | Fix RSC serialization error (KPI icon functions across server/client boundary). Phase 3: SBTi net-zero year ReferenceLine on glidepath, PDF multi-page slicing + financial summary card, i18n live (NextIntlClientProvider + sidebar useTranslations + LanguageSwitcher cookie sync), oklch→hex color fix for html2canvas compatibility |

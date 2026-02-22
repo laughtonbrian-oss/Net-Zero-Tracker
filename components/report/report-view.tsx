@@ -126,11 +126,26 @@ export function ReportView({ company, baseline, targets, scenarios, intervention
     const canvas = await html2canvas(reportRef.current, { backgroundColor: "#ffffff", scale: 2 });
     const imgData = canvas.toDataURL("image/png");
     const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-    pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const imgH = (canvas.height * pageW) / canvas.width;
+    let yOffset = 0;
+    while (yOffset < imgH) {
+      pdf.addImage(imgData, "PNG", 0, -yOffset, pageW, imgH);
+      yOffset += pageH;
+      if (yOffset < imgH) pdf.addPage();
+    }
     pdf.save(`${company?.name ?? "report"}_net_zero_report.pdf`);
   }
+
+  const financialTotals = activeScenario?.interventions.reduce(
+    (acc, si) => ({
+      capex: acc.capex + (si.capex ?? 0),
+      opex: acc.opex + (si.opex ?? 0),
+      externalFunding: acc.externalFunding + (si.externalFunding ?? 0),
+    }),
+    { capex: 0, opex: 0, externalFunding: 0 }
+  ) ?? null;
 
   return (
     <div>
@@ -217,6 +232,39 @@ export function ReportView({ company, baseline, targets, scenarios, intervention
             </CardContent>
           </Card>
         </div>
+
+        {/* Financial summary */}
+        {financialTotals && (financialTotals.capex > 0 || financialTotals.opex > 0 || financialTotals.externalFunding > 0) && (
+          <div className="grid grid-cols-3 gap-4">
+            <Card className="border-gray-200 shadow-none">
+              <CardContent className="pt-4">
+                <p className="text-xs text-gray-500">Total CAPEX</p>
+                <p className="text-xl font-bold text-gray-900 mt-1">
+                  ${financialTotals.capex.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                </p>
+                <p className="text-xs text-gray-400 mt-0.5">Capital expenditure</p>
+              </CardContent>
+            </Card>
+            <Card className="border-gray-200 shadow-none">
+              <CardContent className="pt-4">
+                <p className="text-xs text-gray-500">Total OPEX</p>
+                <p className="text-xl font-bold text-gray-900 mt-1">
+                  ${financialTotals.opex.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                </p>
+                <p className="text-xs text-gray-400 mt-0.5">Annual operating cost</p>
+              </CardContent>
+            </Card>
+            <Card className="border-gray-200 shadow-none">
+              <CardContent className="pt-4">
+                <p className="text-xs text-gray-500">External Funding</p>
+                <p className="text-xl font-bold text-emerald-600 mt-1">
+                  ${financialTotals.externalFunding.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                </p>
+                <p className="text-xs text-gray-400 mt-0.5">Grants &amp; subsidies</p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Glidepath chart */}
         {glidepathData.length > 0 && (

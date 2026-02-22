@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +19,13 @@ const LOCALES = [
 export function LanguageSwitcher() {
   const router = useRouter();
   const [current, setCurrent] = useState("en");
+
+  // Sync initial display with the stored cookie (avoids always showing "EN")
+  useEffect(() => {
+    const match = document.cookie.match(/(?:^|;\s*)locale=([^;]+)/);
+    const stored = match?.[1];
+    if (stored && ["en", "fr"].includes(stored)) setCurrent(stored);
+  }, []);
 
   async function switchLocale(locale: string) {
     await fetch("/api/locale", {

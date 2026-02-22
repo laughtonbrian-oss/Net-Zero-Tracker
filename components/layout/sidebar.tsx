@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import {
   BarChart2,
@@ -23,31 +24,32 @@ import {
   ClipboardList,
 } from "lucide-react";
 
-const mainNavItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/baseline", label: "Baseline", icon: BarChart2 },
-  { href: "/targets", label: "Targets", icon: Target },
-  { href: "/interventions", label: "Interventions", icon: Lightbulb },
-  { href: "/scenarios", label: "Scenarios", icon: GitBranch },
-  { href: "/assets", label: "Assets", icon: Building2 },
-  { href: "/portfolio", label: "Portfolio", icon: Map },
-  { href: "/alerts", label: "Alerts", icon: Bell },
-  { href: "/energy", label: "Energy", icon: Zap },
-  { href: "/reports", label: "Reports", icon: FileText },
-];
+const mainNavHrefs = [
+  { href: "/dashboard", key: "dashboard", icon: LayoutDashboard },
+  { href: "/baseline", key: "baseline", icon: BarChart2 },
+  { href: "/targets", key: "targets", icon: Target },
+  { href: "/interventions", key: "interventions", icon: Lightbulb },
+  { href: "/scenarios", key: "scenarios", icon: GitBranch },
+  { href: "/assets", key: "assets", icon: Building2 },
+  { href: "/portfolio", key: "portfolio", icon: Map },
+  { href: "/alerts", key: "alerts", icon: Bell },
+  { href: "/energy", key: "energy", icon: Zap },
+  { href: "/reports", key: "reports", icon: FileText },
+] as const;
 
-const adminNavItems = [
-  { href: "/settings/users", label: "Team", icon: Users },
-  { href: "/settings", label: "Settings", icon: Settings },
-  { href: "/settings/emission-factors", label: "Emission Factors", icon: FlaskConical },
-  { href: "/settings/branding", label: "Branding", icon: Palette },
-  { href: "/audit", label: "Audit Log", icon: ClipboardList },
-];
+const adminNavHrefs = [
+  { href: "/settings/users", key: "team", icon: Users },
+  { href: "/settings", key: "settings", icon: Settings },
+  { href: "/settings/emission-factors", key: "emissionFactors", icon: FlaskConical },
+  { href: "/settings/branding", key: "branding", icon: Palette },
+  { href: "/audit", key: "auditLog", icon: ClipboardList },
+] as const;
 
 export function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const isAdmin = session?.user?.role === "ADMIN";
+  const t = useTranslations("nav");
 
   function isActive(href: string) {
     if (href === "/dashboard") return pathname === href;
@@ -71,7 +73,7 @@ export function Sidebar() {
 
       {/* Main nav */}
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-        {mainNavItems.map(({ href, label, icon: Icon }) => (
+        {mainNavHrefs.map(({ href, key, icon: Icon }) => (
           <Link
             key={href}
             href={href}
@@ -88,16 +90,16 @@ export function Sidebar() {
                 isActive(href) ? "text-emerald-400" : "text-slate-500"
               )}
             />
-            {label}
+            {t(key)}
           </Link>
         ))}
 
         {isAdmin && (
           <>
             <div className="pt-4 pb-1 px-3">
-              <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Admin</p>
+              <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">{t("admin")}</p>
             </div>
-            {adminNavItems.map(({ href, label, icon: Icon }) => (
+            {adminNavHrefs.map(({ href, key, icon: Icon }) => (
               <Link
                 key={href}
                 href={href}
@@ -114,7 +116,7 @@ export function Sidebar() {
                     isActive(href) ? "text-emerald-400" : "text-slate-500"
                   )}
                 />
-                {label}
+                {t(key)}
               </Link>
             ))}
           </>

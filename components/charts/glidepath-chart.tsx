@@ -102,6 +102,11 @@ function CustomLegend({
 export function GlidepathChart({ data, baselineYear, targets }: Props) {
   if (!data.length) return null;
 
+  // First year where residual emissions drop to or below the target line
+  const netZeroYear = data.find(
+    (d) => d.target != null && d.residual <= d.target
+  )?.year ?? null;
+
   return (
     <ResponsiveContainer width="100%" height={340}>
       <ComposedChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
@@ -132,6 +137,15 @@ export function GlidepathChart({ data, baselineYear, targets }: Props) {
           strokeDasharray="4 4"
           label={{ value: "Baseline", position: "insideTopRight", fontSize: 10, fill: "#9ca3af" }}
         />
+        {netZeroYear && (
+          <ReferenceLine
+            x={netZeroYear}
+            stroke="#10b981"
+            strokeWidth={1.5}
+            strokeDasharray="4 2"
+            label={{ value: `✓ Net zero ${netZeroYear}`, position: "insideTopLeft", fontSize: 10, fill: "#10b981" }}
+          />
+        )}
 
         {/* Residual emissions — single bar */}
         <Bar
