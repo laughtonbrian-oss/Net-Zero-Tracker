@@ -13,7 +13,11 @@ import { hkdf } from "@panva/hkdf";
  */
 
 const PUBLIC_PATHS = ["/login", "/register", "/api/auth", "/onboarding"];
-const COOKIE_NAME = "authjs.session-token";
+// NextAuth v5 uses __Secure- prefix on HTTPS (production) and plain name on HTTP (dev)
+const COOKIE_NAMES = [
+  "__Secure-authjs.session-token",
+  "authjs.session-token",
+];
 
 async function getDerivedKey(secret: string): Promise<Uint8Array> {
   return hkdf(
@@ -26,7 +30,12 @@ async function getDerivedKey(secret: string): Promise<Uint8Array> {
 }
 
 async function getToken(req: NextRequest): Promise<{ companyId?: string | null } | null> {
-  const cookie = req.cookies.get(COOKIE_NAME)?.value;
+  // Try both cookie names: __Secure- prefix (HTTPS/production) first, then plain (HTTP/dev)
+  let cookie: string | undefined;
+  for (const name of COOKIE_NAMES) {
+    cookie = req.cookies.get(name)?.value;
+    if (cookie) break;
+  }
   if (!cookie) return null;
 
   const secret = process.env.AUTH_SECRET;
