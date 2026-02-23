@@ -2,14 +2,13 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 
 export function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   // Validate callbackUrl is a relative path to prevent open redirect attacks
   const rawCallback = searchParams.get("callbackUrl") ?? "";
@@ -25,21 +24,26 @@ export function LoginForm() {
     setError(null);
     setLoading(true);
 
-    const res = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
+    try {
+      const res = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
 
-    setLoading(false);
+      if (res?.error) {
+        setError("Invalid email or password");
+        setLoading(false);
+        return;
+      }
 
-    if (res?.error) {
+      // Hard redirect — ensures the browser sends the new session cookie
+      // and avoids router.push + router.refresh race condition
+      window.location.href = callbackUrl;
+    } catch {
       setError("Invalid email or password");
-      return;
+      setLoading(false);
     }
-
-    router.push(callbackUrl);
-    router.refresh();
   }
 
   async function handleMicrosoftSignIn() {
