@@ -1,10 +1,49 @@
-import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { jwtDecrypt } from "jose";
+import { hkdf } from "@panva/hkdf";
+
+/**
+ * Lightweight edge-compatible middleware that checks the NextAuth v5 JWT
+ * session cookie without importing the full auth config (which pulls in
+ * Prisma, bcrypt, @libsql/client and blows past the 1 MB edge limit).
+ *
+ * NextAuth v5 encrypts its JWT with A256CBC-HS512 using a key derived
+ * from AUTH_SECRET via HKDF. We replicate that derivation here with jose.
+ */
 
 const PUBLIC_PATHS = ["/login", "/register", "/api/auth", "/onboarding"];
+const COOKIE_NAME = "authjs.session-token";
 
-export default auth(function middleware(req: NextRequest) {
+async function getDerivedKey(secret: string): Promise<Uint8Array> {
+  return hkdf(
+    "sha256",
+    secret,
+    "",
+    "Auth.js Generated Encryption Key",
+    64
+  );
+}
+
+async function getToken(req: NextRequest): Promise<{ companyId?: string | null } | null> {
+  const cookie = req.cookies.get(COOKIE_NAME)?.value;
+  if (!cookie) return null;
+
+  const secret = process.env.AUTH_SECRET;
+  if (!secret) return null;
+
+  try {
+    const key = await getDerivedKey(secret);
+    const { payload } = await jwtDecrypt(cookie, key, {
+      clockTolerance: 15,
+    });
+    return payload as { companyId?: string | null };
+  } catch {
+    return null;
+  }
+}
+
+export default async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Allow public paths
@@ -12,31 +51,24 @@ export default auth(function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // @ts-expect-error auth() attaches auth to the request
-  const session = req.auth;
+  const token = await getToken(req);
 
-  if (!session) {
+  if (!token) {
     const loginUrl = new URL("/login", req.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
   // If authenticated but no company, redirect to onboarding (for OAuth users)
-  if (session.user && !session.user.companyId && !pathname.startsWith("/api")) {
+  if (!token.companyId && !pathname.startsWith("/api")) {
     return NextResponse.redirect(new URL("/onboarding", req.url));
   }
 
   return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization)
-     * - favicon.ico, public files
-     */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|leaflet|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
