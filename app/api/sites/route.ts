@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getTenantContext } from "@/lib/tenant";
 import { requireEdit } from "@/lib/permissions";
 import { writeAuditLog } from "@/lib/audit";
+import { apiHandler } from "@/lib/api-handler";
 import { z } from "zod";
 
 export const SITE_TYPES = ["office", "warehouse", "manufacturing", "retail", "data_centre", "other"] as const;
@@ -22,40 +23,30 @@ const schema = z.object({
   notes: z.string().optional(),
 });
 
-export async function GET() {
-  try {
-    const ctx = await getTenantContext();
-    const sites = await db.site.findMany({
-      where: { companyId: ctx.companyId },
-      orderBy: { name: "asc" },
-    });
-    return NextResponse.json({ data: sites });
-  } catch (err) {
-    if (err instanceof Response) return err;
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
-}
+export const GET = apiHandler(async () => {
+  const ctx = await getTenantContext();
+  const sites = await db.site.findMany({
+    where: { companyId: ctx.companyId },
+    orderBy: { name: "asc" },
+  });
+  return NextResponse.json({ data: sites });
+});
 
-export async function POST(req: Request) {
-  try {
-    const ctx = await getTenantContext();
-    requireEdit(ctx);
-    const body = await req.json();
-    const parsed = schema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-    }
-    const site = await db.site.create({
-      data: { companyId: ctx.companyId, ...parsed.data },
-    });
-    await writeAuditLog({
-      companyId: ctx.companyId, userId: ctx.userId,
-      entityType: "site", entityId: site.id,
-      action: "created", before: null, after: site,
-    });
-    return NextResponse.json({ data: site }, { status: 201 });
-  } catch (err) {
-    if (err instanceof Response) return err;
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+export const POST = apiHandler(async (req) => {
+  const ctx = await getTenantContext();
+  requireEdit(ctx);
+  const body = await req.json();
+  const parsed = schema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
-}
+  const site = await db.site.create({
+    data: { companyId: ctx.companyId, ...parsed.data },
+  });
+  await writeAuditLog({
+    companyId: ctx.companyId, userId: ctx.userId,
+    entityType: "site", entityId: site.id,
+    action: "created", before: null, after: site,
+  });
+  return NextResponse.json({ data: site }, { status: 201 });
+});

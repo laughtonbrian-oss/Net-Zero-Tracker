@@ -19,16 +19,27 @@ const COOKIE_NAMES = [
   "authjs.session-token",
 ];
 
+// Cache derived keys — HKDF is deterministic for a given secret+salt, so
+// there's no reason to re-derive on every request. The cache is module-scoped
+// and lives for the lifetime of the edge worker instance.
+const derivedKeyCache = new Map<string, Uint8Array>();
+
 async function getDerivedKey(secret: string, salt: string): Promise<Uint8Array> {
+  const cacheKey = `${secret}|${salt}`;
+  const cached = derivedKeyCache.get(cacheKey);
+  if (cached) return cached;
+
   // Must match @auth/core/src/jwt.ts getDerivedEncryptionKey exactly:
   // salt = cookie name, info = "Auth.js Generated Encryption Key (<salt>)"
-  return hkdf(
+  const key = await hkdf(
     "sha256",
     secret,
     salt,
     `Auth.js Generated Encryption Key (${salt})`,
     64
   );
+  derivedKeyCache.set(cacheKey, key);
+  return key;
 }
 
 async function getToken(req: NextRequest): Promise<{ companyId?: string | null } | null> {

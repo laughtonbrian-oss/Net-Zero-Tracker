@@ -35,7 +35,21 @@ type TargetInput = {
   scopeCombination: string;
 };
 
-function getAnnualAbatement(si: ScenarioInterventionInput, year: number): number {
+// Pre-index annual reductions by year for O(1) lookups instead of O(n) .find() per year
+type AnnualReductionMap = Map<number, number>;
+
+function buildAnnualReductionMap(
+  reductions: { year: number; tco2eReduction: number }[] | undefined
+): AnnualReductionMap | null {
+  if (!reductions || reductions.length === 0) return null;
+  return new Map(reductions.map((r) => [r.year, r.tco2eReduction]));
+}
+
+function getAnnualAbatement(
+  si: ScenarioInterventionInput,
+  year: number,
+  reductionMap: AnnualReductionMap | null
+): number {
   const iv = si.intervention;
   const startYear = si.startYear;
   const endYear = si.endYear ?? iv.fullBenefitYear;
@@ -43,9 +57,8 @@ function getAnnualAbatement(si: ScenarioInterventionInput, year: number): number
 
   if (year < startYear || year > endYear) return 0;
 
-  if (iv.annualReductions && iv.annualReductions.length > 0) {
-    const entry = iv.annualReductions.find((r) => r.year === year);
-    return (entry?.tco2eReduction ?? 0) * executionFraction;
+  if (reductionMap) {
+    return (reductionMap.get(year) ?? 0) * executionFraction;
   }
 
   const totalReduction = iv.totalReductionTco2e * executionFraction;
@@ -56,34 +69,61 @@ function getAnnualAbatement(si: ScenarioInterventionInput, year: number): number
   return annualAtFullRamp;
 }
 
-function getBauForYear(baselineTotal: number, baseline: BaselineInput, year: number): number {
-  const yearsFromBase = year - baseline.year;
-  if (yearsFromBase <= 0) return baselineTotal;
-
+// Pre-compute BAU values for the entire year range to avoid redundant
+// re-walking of growth rate periods (was O(years * periods) per call,
+// now O(years * periods) total via a single pass).
+function buildBauSeries(
+  baselineTotal: number,
+  baseline: BaselineInput,
+  yearRange: YearRange
+): Map<number, number> {
+  const bauByYear = new Map<number, number>();
   const periods = baseline.growthRates ?? [];
+  const defaultRate = (baseline.growthRatePct ?? 0) / 100;
+
   if (periods.length === 0) {
-    const growthRate = (baseline.growthRatePct ?? 0) / 100;
-    return baselineTotal * Math.pow(1 + growthRate, yearsFromBase);
+    // Simple compound growth — no need to walk year-by-year
+    for (let y = yearRange.start; y <= yearRange.end; y++) {
+      const yearsFromBase = y - baseline.year;
+      bauByYear.set(
+        y,
+        yearsFromBase <= 0
+          ? baselineTotal
+          : baselineTotal * Math.pow(1 + defaultRate, yearsFromBase)
+      );
+    }
+    return bauByYear;
   }
 
-  // Walk through periods year by year
+  // Sort periods once for binary-search-friendly iteration
+  const sortedPeriods = [...periods].sort((a, b) => a.fromYear - b.fromYear);
+
+  // Walk forward from baseline year, accumulating the compound value
   let value = baselineTotal;
-  for (let y = baseline.year + 1; y <= year; y++) {
-    const period = periods.find((p) => y >= p.fromYear && y <= p.toYear);
-    const rate = period ? period.ratePct / 100 : (baseline.growthRatePct ?? 0) / 100;
-    value = value * (1 + rate);
+  // Fill years before/at baseline
+  for (let y = yearRange.start; y <= Math.min(baseline.year, yearRange.end); y++) {
+    bauByYear.set(y, baselineTotal);
   }
-  return value;
+  // Fill years after baseline with compound growth
+  for (let y = baseline.year + 1; y <= yearRange.end; y++) {
+    const period = sortedPeriods.find((p) => y >= p.fromYear && y <= p.toYear);
+    const rate = period ? period.ratePct / 100 : defaultRate;
+    value = value * (1 + rate);
+    bauByYear.set(y, value);
+  }
+  return bauByYear;
 }
 
 export function buildGlidepathMeta(
   scenarioInterventions: ScenarioInterventionInput[],
   interventionNames: { id: string; name: string }[]
 ): GlidepathMeta {
+  // Map for O(1) name lookups instead of .find() per intervention
+  const nameMap = new Map(interventionNames.map((n) => [n.id, n.name]));
   return {
     interventions: scenarioInterventions.map((si, idx) => ({
       id: si.interventionId,
-      name: interventionNames.find((n) => n.id === si.interventionId)?.name ?? si.interventionId,
+      name: nameMap.get(si.interventionId) ?? si.interventionId,
       color: COLOURS[idx % COLOURS.length],
     })),
   };
@@ -109,16 +149,38 @@ export function buildGlidepathData({
     targets.find((t) => !t.isInterim) ??
     targets[0];
 
+  // Pre-compute BAU for all years in a single pass (avoids re-walking growth periods per year)
+  const bauByYear = buildBauSeries(baselineTotal, baseline, yearRange);
+
+  // Pre-index actual emissions by year for O(1) lookups
+  const actualByYear = actualEmissions
+    ? new Map(actualEmissions.map((a) => [a.year, a.scope1 + a.scope2 + a.scope3]))
+    : null;
+
+  // Pre-build annual reduction Maps for each intervention (avoids .find() per year per intervention)
+  const reductionMaps = scenarioInterventions.map((si) =>
+    buildAnnualReductionMap(si.intervention.annualReductions)
+  );
+
+  // Pre-compute target line values that are constant
+  const targetLevel = primaryTarget
+    ? baselineTotal * (1 - primaryTarget.reductionPct / 100)
+    : null;
+  const targetSpan = primaryTarget
+    ? primaryTarget.targetYear - baseline.year
+    : 0;
+
   const data: GlidepathDataPoint[] = [];
 
   for (let year = yearRange.start; year <= yearRange.end; year++) {
-    const bau = getBauForYear(baselineTotal, baseline, year);
+    const bau = bauByYear.get(year) ?? baselineTotal;
 
     // Per-intervention abatement this year
     const perIntervention: Record<string, number> = {};
     let totalAbatement = 0;
-    for (const si of scenarioInterventions) {
-      const abatement = getAnnualAbatement(si, year);
+    for (let i = 0; i < scenarioInterventions.length; i++) {
+      const si = scenarioInterventions[i];
+      const abatement = getAnnualAbatement(si, year, reductionMaps[i]);
       perIntervention[`i_${si.interventionId}`] = abatement;
       totalAbatement += abatement;
     }
@@ -126,20 +188,18 @@ export function buildGlidepathData({
     const residual = Math.max(0, bau - totalAbatement);
 
     let target: number | null = null;
-    if (primaryTarget) {
+    if (primaryTarget && targetLevel !== null) {
       if (year <= baseline.year) {
         target = baselineTotal;
       } else if (year >= primaryTarget.targetYear) {
-        target = baselineTotal * (1 - primaryTarget.reductionPct / 100);
+        target = targetLevel;
       } else {
-        const progress = (year - baseline.year) / (primaryTarget.targetYear - baseline.year);
-        const targetLevel = baselineTotal * (1 - primaryTarget.reductionPct / 100);
+        const progress = (year - baseline.year) / targetSpan;
         target = baselineTotal + (targetLevel - baselineTotal) * progress;
       }
     }
 
-    const actualPoint = actualEmissions?.find((a) => a.year === year);
-    const actual = actualPoint ? actualPoint.scope1 + actualPoint.scope2 + actualPoint.scope3 : null;
+    const actual = actualByYear?.get(year) ?? null;
 
     data.push({ year, residual, bau, target, actual, ...perIntervention });
   }

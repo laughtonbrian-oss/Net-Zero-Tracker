@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getTenantContext } from "@/lib/tenant";
 import { requireEdit } from "@/lib/permissions";
 import { writeAuditLog } from "@/lib/audit";
+import { apiHandler } from "@/lib/api-handler";
 import { z } from "zod";
 
 const targetSchema = z.object({
@@ -14,48 +15,37 @@ const targetSchema = z.object({
   isSbtiAligned: z.boolean().default(false),
 });
 
-export async function GET() {
-  try {
-    const ctx = await getTenantContext();
-    const targets = await db.target.findMany({
-      where: { companyId: ctx.companyId },
-      orderBy: [{ targetYear: "asc" }, { createdAt: "asc" }],
-    });
-    return NextResponse.json({ data: targets });
-  } catch (err) {
-    if (err instanceof Response) return err;
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+export const GET = apiHandler(async () => {
+  const ctx = await getTenantContext();
+  const targets = await db.target.findMany({
+    where: { companyId: ctx.companyId },
+    orderBy: [{ targetYear: "asc" }, { createdAt: "asc" }],
+  });
+  return NextResponse.json({ data: targets });
+});
+
+export const POST = apiHandler(async (req) => {
+  const ctx = await getTenantContext();
+  requireEdit(ctx);
+
+  const body = await req.json();
+  const parsed = targetSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
-}
 
-export async function POST(req: Request) {
-  try {
-    const ctx = await getTenantContext();
-    requireEdit(ctx);
+  const target = await db.target.create({
+    data: { companyId: ctx.companyId, ...parsed.data },
+  });
 
-    const body = await req.json();
-    const parsed = targetSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-    }
+  await writeAuditLog({
+    companyId: ctx.companyId,
+    userId: ctx.userId,
+    entityType: "target",
+    entityId: target.id,
+    action: "created",
+    after: parsed.data,
+  });
 
-    const target = await db.target.create({
-      data: { companyId: ctx.companyId, ...parsed.data },
-    });
-
-    await writeAuditLog({
-      companyId: ctx.companyId,
-      userId: ctx.userId,
-      entityType: "target",
-      entityId: target.id,
-      action: "created",
-      after: parsed.data,
-    });
-
-    return NextResponse.json({ data: target }, { status: 201 });
-  } catch (err) {
-    if (err instanceof Response) return err;
-    console.error("[targets POST]", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
-}
+  return NextResponse.json({ data: target }, { status: 201 });
+});

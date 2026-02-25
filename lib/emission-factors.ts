@@ -41,11 +41,16 @@ export const EMISSION_FACTORS: EmissionFactor[] = [
   { region: "US-AKGR", fuelType: "Grid Electricity", value: 0.520, source: "US EPA eGRID 2024 AKGR (Alaska)", year: 2024, unit: "kgCO2e/kWh" },
 ];
 
+// Pre-built Map for O(1) lookups instead of O(n) linear scan on every call
+const EMISSION_FACTOR_MAP = new Map<string, EmissionFactor>(
+  EMISSION_FACTORS.map((f) => [
+    `${f.region.toLowerCase()}|${f.fuelType.toLowerCase()}`,
+    f,
+  ])
+);
+
 export function getEmissionFactor(region: string, fuelType: string): EmissionFactor | undefined {
-  return EMISSION_FACTORS.find(
-    (f) => f.region.toLowerCase() === region.toLowerCase() &&
-           f.fuelType.toLowerCase() === fuelType.toLowerCase()
-  );
+  return EMISSION_FACTOR_MAP.get(`${region.toLowerCase()}|${fuelType.toLowerCase()}`);
 }
 
 export function kWhToTco2e(kWh: number, region: string, fuelType: string): number {
